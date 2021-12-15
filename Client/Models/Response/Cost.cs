@@ -1,7 +1,7 @@
-﻿using System.Text.Json.Serialization;
-
-namespace BrickLink.Client.Models.Response
+﻿namespace BrickLink.Client.Models.Response
 {
+    using System.Text.Json.Serialization;
+    
     public record Cost
     {
         public string currency_code { get; init; }

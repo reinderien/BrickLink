@@ -16,15 +16,15 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Unit" />
-    </ItemGroup>
-
-    <ItemGroup>
       <ProjectReference Include="..\Client\Client.csproj" />
     </ItemGroup>
 
     <ItemGroup>
       <Content Include="app.config" />
+      <Content Include="Unit\Data\orders.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Unit\orders.json" />
     </ItemGroup>
     
     <Target Name="CopyConfig" AfterTargets="AfterBuild">

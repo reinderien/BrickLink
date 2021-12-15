@@ -1,0 +1,41 @@
+﻿{
+  "meta": {
+    "description": "OK",
+    "message": "OK",
+    "code": 200
+  },
+  "data": [
+    {
+      "order_id": 17318681,
+      "date_ordered": "2021-10-07T21:38:43.650Z",
+      "date_status_changed": "2021-10-12T16:01:38.000Z",
+      "seller_name": "chedburgh",
+      "store_name": "Shiny Bricks",
+      "buyer_name": "GeorgeS",
+      "status": "COMPLETED",
+      "total_count": 2,
+      "unique_count": 2,
+      "is_filed": false,
+      "salesTax_collected_by_bl": false,
+      "vat_collected_by_bl": false,
+      "payment": {
+        "method": "PayPal (Onsite)",
+        "currency_code": "GBP",
+        "date_paid": "2021-10-07T21:38:43.650Z",
+        "status": "Received"
+      },
+      "cost": {
+        "currency_code": "GBP",
+        "subtotal": "8.5500",
+        "grand_total": "9.7100",
+        "final_total": "9.7100"
+      },
+      "disp_cost": {
+        "currency_code": "GBP",
+        "subtotal": "8.5500",
+        "grand_total": "9.7100",
+        "final_total": "9.7100"
+      }
+    }
+  ]
+}

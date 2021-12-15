@@ -12,6 +12,6 @@
 
         public override void Write(
             Utf8JsonWriter writer, decimal value, JsonSerializerOptions options
-        ) => writer.WriteStringValue($"{value:f2}");
+        ) => writer.WriteStringValue($"{value:f4}");
     }
 }
