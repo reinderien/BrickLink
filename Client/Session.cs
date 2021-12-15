@@ -6,6 +6,7 @@
     using System.Linq;
     using System.Net;
     using System.Net.Http;
+    using System.Net.Http.Headers;
     using System.Security.Cryptography;
     using System.Text;
     using System.Text.Json;
@@ -135,7 +136,7 @@
         /// states that this is "OAuth-like but simpler flow".
         /// </summary>
         /// <returns>The value to go in the Authentication: header.</returns>
-        private string OAuthHeader(HttpMethod method, Uri url)
+        private AuthenticationHeaderValue OAuthHeader(HttpMethod method, Uri url)
         {
             OAuthParams(
                 HttpUtility.ParseQueryString(url.Query),
@@ -155,20 +156,17 @@
                 Convert.ToBase64String(binarySig)
             );
 
-            string header = "OAuth realm=\"" + Realm + "\", "
+            string param = "realm=\"" + Realm + "\", "
                             + forHeader
                             + ", oauth_signature=\"" + sig + '"';
-            return header;
+            return new(scheme: "OAuth", parameter: param);
         }
 
         public HttpRequestMessage ConstructRequest(HttpMethod method, string path)
         {
             Uri url = new(baseUri: BaseURI, relativeUri: path);
             HttpRequestMessage request = new(method: method, requestUri: url);
-            request.Headers.Add(
-                name: "Authorization",
-                value: OAuthHeader(method: method, url: url)
-            );
+            request.Headers.Authorization = OAuthHeader(method: method, url: url);
             return request;
         }
 
