@@ -16,14 +16,16 @@
 
     public record Session
     {
-        private const string Realm = "";
-
-        private static readonly Uri BaseURI = new("https://api.bricklink.com/api/store/v3/");
+        private const string Realm = "https://api.bricklink.com/api/store/v3/";
+        private static readonly Uri BaseURI = new(Realm);
         
         private static readonly HttpClient Client = new()
         {
             BaseAddress = BaseURI,
-            DefaultRequestHeaders = {},
+            DefaultRequestHeaders =
+            {
+                {"Accept", "application/json"}
+            },
         };
 
         private readonly string
@@ -48,7 +50,7 @@
             );
         }
 
-        private SortedDictionary<string, string> baseOAuthParams => new() {
+        private SortedDictionary<string, string> BaseOAuthParams => new() {
             {"oauth_consumer_key", _consumerKey},
             {
                 "oauth_nonce",
@@ -80,6 +82,20 @@
             return builder.Uri;
         }
 
+        private static IEnumerable<KeyValuePair<string, string>> FlattenNameValue(NameValueCollection collection)
+        {
+            return collection
+                .Cast<string>()
+                .SelectMany(
+                    key =>
+                        // We're already iterating over keys, so this will never be null; hence !
+                        collection.GetValues(key)!
+                        .Select(
+                            value => new KeyValuePair<string, string>(key, value)
+                        )
+                );
+        }
+
         private void OAuthParams(
             NameValueCollection queryAndFormParams,
             out string signatureParams,
@@ -89,15 +105,8 @@
             // See https://oauth.net/core/1.0 for parameter normalisation
             
             List<KeyValuePair<string, string>> merged =
-                queryAndFormParams.Cast<string>()
-                .SelectMany(
-                    key =>
-                        queryAndFormParams.GetValues(key)
-                        .Select(
-                            value => new KeyValuePair<string, string>(key, value)
-                        )
-                )
-                .Concat(baseOAuthParams)
+                FlattenNameValue(queryAndFormParams)
+                .Concat(BaseOAuthParams)
                 .Select(EncodeKV)
                 .OrderBy(kv => kv.Key)
                 .ThenBy(kv => kv.Value)
@@ -126,7 +135,7 @@
         /// states that this is "OAuth-like but simpler flow".
         /// </summary>
         /// <returns>The value to go in the Authentication: header.</returns>
-        public string OAuthHeader(HttpMethod method, Uri url)
+        private string OAuthHeader(HttpMethod method, Uri url)
         {
             OAuthParams(
                 HttpUtility.ParseQueryString(url.Query),
@@ -154,19 +163,16 @@
 
         public HttpRequestMessage ConstructRequest(HttpMethod method, string path)
         {
-            HttpRequestMessage request = new(
-                method: method, 
-                requestUri: new Uri(baseUri: BaseURI, relativeUri: path)
-            );
-            request.Headers.Add("Accept", "application/json");
+            Uri url = new(baseUri: BaseURI, relativeUri: path);
+            HttpRequestMessage request = new(method: method, requestUri: url);
             request.Headers.Add(
                 name: "Authorization",
-                value: OAuthHeader(method: request.Method, url: request.RequestUri)
+                value: OAuthHeader(method: method, url: url)
             );
             return request;
         }
 
-        public void SendRequest(HttpRequestMessage request)
+        public static void SendRequest(HttpRequestMessage request)
         {
             HttpResponseMessage response = Client.Send(request);
             CheckErrors(response);
@@ -184,42 +190,38 @@
             Response? response = JsonSerializer.Deserialize<Response>(
                 message.Content.ReadAsStream()
             );
-            if (response?.meta?.code != null && !(
-                    response.meta.code >= 200 &&
-                    response.meta.code < 300
-                )
-            )
-                throw new APIException(response.meta);
+            if (response == null)
+                throw new APIException("Failed to deserialise JSON");
+            if (!response.meta.IsSuccess)
+                throw new ResponseException(response.meta);
         }
 
         private static void CheckFakeRedirects(HttpResponseMessage response)
         {
-            if (response.StatusCode == HttpStatusCode.Found)
-            {
-                Uri? location = response.Headers.Location;
-                if (location != null 
-                    && location.AbsolutePath.EndsWith("error.page"))
-                {
-                    NameValueCollection query = HttpUtility.ParseQueryString(location.Query);
-                    
-                    HttpStatusCode? maybeCode = null;
-                    if (Enum.TryParse<HttpStatusCode>(
-                        query["code"], out HttpStatusCode code
-                    ))
-                        maybeCode = code;
+            if (response.StatusCode != HttpStatusCode.Found)
+                return;
+            
+            Uri? location = response.Headers.Location;
+            if (location == null
+                || !location.AbsolutePath.EndsWith("error.page"))
+                return;
+    
+            NameValueCollection query = HttpUtility.ParseQueryString(location.Query);
+            
+            HttpStatusCode? maybeCode = null;
+            if (Enum.TryParse(query["code"], out HttpStatusCode code))
+                maybeCode = code;
 
-                    string desc = "The response redirected to an error page";
-                    string? message = query["msg"];
-                    if (message != null)
-                        desc += ": " + message;
-                    
-                    throw new HttpRequestException(
-                        message: desc,
-                        statusCode: maybeCode,
-                        inner: null
-                    );
-                }
-            }
+            string desc = "The response redirected to an error page";
+            string? message = query["msg"];
+            if (message != null)
+                desc += ": " + message;
+            
+            throw new HttpRequestException(
+                message: desc,
+                statusCode: maybeCode,
+                inner: null
+            );
         }
     }
 }

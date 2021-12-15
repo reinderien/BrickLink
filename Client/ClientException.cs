@@ -14,15 +14,18 @@
         public InvalidConfigurationException(string message) : base(message) {}
     }
 
-    public class APIException : Exception
+    public class APIException : ClientException
+    {
+        public APIException(string message) : base(message) {}
+    }
+
+    public class ResponseException : ClientException
     {
         public readonly Meta Meta;
 
-        public APIException(Meta meta) : base(
+        public ResponseException(Meta meta) : base(
             $"code={meta.code} message={meta.message} description={meta.description}"
         )
-        {
-            Meta = meta; 
-        }
+        { Meta = meta; }
     }
 }
