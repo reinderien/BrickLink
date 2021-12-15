@@ -34,9 +34,6 @@
                 {"Accept", "application/json"},
                 {"Accept-Charset", "UTF-8"}
             },
-            // .NET ignores these; see https://stackoverflow.com/a/59079805/313768
-            DefaultRequestVersion = MinHttpVersion,
-            DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
         };
 
         private readonly string _consumerKey, _tokenValue, _consumerSecret, _tokenSecret;
@@ -177,7 +174,8 @@
             Uri url = new(baseUri: BaseURI, relativeUri: path);
             HttpRequestMessage request = new(method: method, requestUri: url)
             {
-                // This is required because the client's default version stuff is ignored
+                // This is required because the client's default version stuff is
+                // ignored when we make our own message (rather than GetAsync etc.)
                 Version = MinHttpVersion
             };
             request.Headers.Authorization = OAuthHeader(method: method, url: url);
