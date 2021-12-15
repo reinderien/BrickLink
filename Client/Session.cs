@@ -8,8 +8,11 @@
     using System.Net.Http;
     using System.Security.Cryptography;
     using System.Text;
+    using System.Text.Json;
     using System.Web;
     
+    using Models.Response;
+
 
     public record Session
     {
@@ -163,12 +166,30 @@
             return request;
         }
 
-        public HttpResponseMessage SendRequest(HttpRequestMessage request)
+        public void SendRequest(HttpRequestMessage request)
         {
             HttpResponseMessage response = Client.Send(request);
+            CheckErrors(response);
+        }
+
+        private static void CheckErrors(HttpResponseMessage response)
+        {
             response.EnsureSuccessStatusCode();
             CheckFakeRedirects(response);
-            return response;
+            CheckMeta(response);
+        }
+
+        private static void CheckMeta(HttpResponseMessage message)
+        {
+            Response? response = JsonSerializer.Deserialize<Response>(
+                message.Content.ReadAsStream()
+            );
+            if (response?.meta?.code != null && !(
+                    response.meta.code >= 200 &&
+                    response.meta.code < 300
+                )
+            )
+                throw new APIException(response.meta);
         }
 
         private static void CheckFakeRedirects(HttpResponseMessage response)
