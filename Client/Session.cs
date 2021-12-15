@@ -6,34 +6,31 @@
     using System.Linq;
     using System.Net;
     using System.Net.Http;
-    using System.Net.Http.Headers;
     using System.Security.Cryptography;
     using System.Text;
-    using System.Text.Json;
     using System.Web;
     
-    using Models.Response;
-
 
     public record Session
     {
         private const string Realm = "https://api.bricklink.com/api/store/v3/";
         private static readonly Uri BaseURI = new(Realm);
         
+        /*
+        .NET really wants one of these per application, mainly because this is where connection
+        pooling occurs. Unfortunately, this makes it difficult to separate out cookie jars; the
+        cookie container lives on the handler created implicitly on client construction. The
+        cookies - currently AWSALB and AWSALBCORS - are for AWS load-balancing.
+        If this changes and cookies are introduced that have some meaning for an individual
+        authenticated user, we'd have to get more creative and probably make our own handler.
+        */
         private static readonly HttpClient Client = new()
         {
             BaseAddress = BaseURI,
-            DefaultRequestHeaders =
-            {
-                {"Accept", "application/json"}
-            },
+            DefaultRequestHeaders = {{"Accept", "application/json"}},
         };
 
-        private readonly string
-            _consumerKey,
-            _tokenValue,
-            _consumerSecret,
-            _tokenSecret;
+        private readonly string _consumerKey, _tokenValue, _consumerSecret, _tokenSecret;
             
         public Session(string consumerKey, string tokenValue, string consumerSecret, string tokenSecret)
         {
@@ -135,8 +132,8 @@
         /// https://www.bricklink.com/v3/api.page?page=auth
         /// states that this is "OAuth-like but simpler flow".
         /// </summary>
-        /// <returns>The value to go in the Authentication: header.</returns>
-        private AuthenticationHeaderValue OAuthHeader(HttpMethod method, Uri url)
+        private System.Net.Http.Headers.AuthenticationHeaderValue
+            OAuthHeader(HttpMethod method, Uri url)
         {
             OAuthParams(
                 HttpUtility.ParseQueryString(url.Query),
@@ -157,8 +154,8 @@
             );
 
             string param = "realm=\"" + Realm + "\", "
-                            + forHeader
-                            + ", oauth_signature=\"" + sig + '"';
+                           + forHeader
+                           + ", oauth_signature=\"" + sig + '"';
             return new(scheme: "OAuth", parameter: param);
         }
 
@@ -171,13 +168,13 @@
         }
 
         public static TResponse SendRequest<TResponse>(HttpRequestMessage request)
-        where TResponse: Response
+            where TResponse: Models.Response.Response
         {
             HttpResponseMessage message = Client.Send(request);
             message.EnsureSuccessStatusCode();
             CheckFakeRedirects(message);
             
-            TResponse? response = JsonSerializer.Deserialize<TResponse>(
+            TResponse? response = System.Text.Json.JsonSerializer.Deserialize<TResponse>(
                 message.Content.ReadAsStream()
             );
             if (response == null)
@@ -193,8 +190,7 @@
                 return;
             
             Uri? location = response.Headers.Location;
-            if (location == null
-                || !location.AbsolutePath.EndsWith("error.page"))
+            if (location == null || !location.AbsolutePath.EndsWith("error.page"))
                 return;
     
             NameValueCollection query = HttpUtility.ParseQueryString(location.Query);
@@ -209,9 +205,7 @@
                 desc += ": " + message;
             
             throw new HttpRequestException(
-                message: desc,
-                statusCode: maybeCode,
-                inner: null
+                message: desc, statusCode: maybeCode, inner: null
             );
         }
     }
