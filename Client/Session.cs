@@ -15,6 +15,7 @@
     {
         private const string Realm = "https://api.bricklink.com/api/store/v3/";
         private static readonly Uri BaseURI = new(Realm);
+        private static readonly Version MinHttpVersion = new(2, 0);
         
         /*
         .NET really wants one of these per application, mainly because this is where connection
@@ -33,6 +34,9 @@
                 {"Accept", "application/json"},
                 {"Accept-Charset", "UTF-8"}
             },
+            // .NET ignores these; see https://stackoverflow.com/a/59079805/313768
+            DefaultRequestVersion = MinHttpVersion,
+            DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
         };
 
         private readonly string _consumerKey, _tokenValue, _consumerSecret, _tokenSecret;
@@ -171,7 +175,11 @@
         public HttpRequestMessage ConstructRequest(HttpMethod method, string path)
         {
             Uri url = new(baseUri: BaseURI, relativeUri: path);
-            HttpRequestMessage request = new(method: method, requestUri: url);
+            HttpRequestMessage request = new(method: method, requestUri: url)
+            {
+                // This is required because the client's default version stuff is ignored
+                Version = MinHttpVersion
+            };
             request.Headers.Authorization = OAuthHeader(method: method, url: url);
             return request;
         }
