@@ -2,9 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Collections.Immutable;
     using System.Collections.Specialized;
-    using System.Configuration;
     using System.Linq;
     using System.Net;
     using System.Net.Http;
@@ -13,24 +11,8 @@
     using System.Web;
     
 
-    public class Session
+    public record Session
     {
-        private static string ConsumerKey =>
-            ConfigurationManager.AppSettings["ConsumerKey"] ??
-            throw new InvalidConfigurationException("ConsumerKey must be set");
-
-        private static string TokenValue =>
-            ConfigurationManager.AppSettings["TokenValue"] ??
-            throw new InvalidConfigurationException("TokenValue must be set");
-
-        private static string ConsumerSecret =>
-            ConfigurationManager.AppSettings["ConsumerSecret"] ??
-            throw new InvalidConfigurationException("ConsumerSecret must be set");
-
-        private static string TokenSecret =>
-            ConfigurationManager.AppSettings["TokenSecret"] ??
-            throw new InvalidConfigurationException("TokenSecret must be set");
-
         private const string Realm = "";
 
         private static readonly Uri BaseURI = new("https://api.bricklink.com/api/store/v3/");
@@ -41,8 +23,18 @@
             DefaultRequestHeaders = {},
         };
 
-        public Session()
+        private readonly string
+            _consumerKey,
+            _tokenValue,
+            _consumerSecret,
+            _tokenSecret;
+            
+        public Session(string consumerKey, string tokenValue, string consumerSecret, string tokenSecret)
         {
+            _consumerKey = consumerKey;
+            _tokenValue = tokenValue;
+            _consumerSecret = consumerSecret;
+            _tokenSecret = tokenSecret;
         }
 
         private static KeyValuePair<string, string> EncodeKV(KeyValuePair<string, string> kv)
@@ -53,8 +45,8 @@
             );
         }
 
-        private static SortedDictionary<string, string> baseOAuthParams => new() {
-            {"oauth_consumer_key", ConsumerKey},
+        private SortedDictionary<string, string> baseOAuthParams => new() {
+            {"oauth_consumer_key", _consumerKey},
             {
                 "oauth_nonce",
                 BitConverter.ToString(
@@ -68,11 +60,11 @@
                 .ToUnixTimeSeconds()
                 .ToString()
             },
-            {"oauth_token", TokenValue},
+            {"oauth_token", _tokenValue},
             {"oauth_version", "1.0"},
         };
 
-        private static string NormaliseUri(Uri uri)
+        private static Uri NormaliseUri(Uri uri)
         {
             UriBuilder builder = new()
             {
@@ -82,38 +74,39 @@
             };
             if (!uri.IsDefaultPort)
                 builder.Port = uri.Port;
-            return WebUtility.UrlEncode(builder.Uri.ToString());
+            return builder.Uri;
         }
 
         private void OAuthParams(
             NameValueCollection queryAndFormParams,
-            out string forSignature,
-            out string forHeader
+            out string signatureParams,
+            out string headerParams
         )
         {
             // See https://oauth.net/core/1.0 for parameter normalisation
             
-            // This will throw if a reserved key in baseDict appears in queryAndFormParams
-
-            queryAndFormParams.Cast<string>();
-            
-            IDictionary<string, string> merged = baseOAuthParams
-                // .Concat(
-                //     queryAndFormParams.Cast<string>()
-                // )
+            List<KeyValuePair<string, string>> merged =
+                queryAndFormParams.Cast<string>()
+                .SelectMany(
+                    key =>
+                        queryAndFormParams.GetValues(key)
+                        .Select(
+                            value => new KeyValuePair<string, string>(key, value)
+                        )
+                )
+                .Concat(baseOAuthParams)
                 .Select(EncodeKV)
-                .ToImmutableSortedDictionary();
+                .OrderBy(kv => kv.Key)
+                .ThenBy(kv => kv.Value)
+                .ToList();
 
-            forSignature = string.Join(
+            signatureParams = string.Join(
                 '&',
-                merged
-                    // We skip this because we're already using SortedDictionary, and we assume that
-                    // there are no parameter dupes (even though this is technically possible in HTTP).
-                    // .OrderBy(kv => kv.Key)
-                    // .ThenBy(kv => kv.Value)
-                    .Select(kv => kv.Key + '=' + kv.Value)
+                merged.Select(
+                    kv => kv.Key + '=' + kv.Value
+                )
             );
-            forHeader = string.Join(
+            headerParams = string.Join(
                 ", ",
                 merged.Select(
                     kv => kv.Key + "=\"" + kv.Value + '"'
@@ -121,22 +114,27 @@
             );
         }
 
-        private string OAuthHeader(string method, Uri url)
+        /// <summary>
+        /// Create OAuth authentication information based on parameters of the HTTP request and
+        /// authentication strings.
+        /// We assume that we'll never POST form-encoded body parameters.
+        /// This is home-grown rather than using an off-the-shelf lib because
+        /// https://www.bricklink.com/v3/api.page?page=auth
+        /// states that this is "OAuth-like but simpler flow".
+        /// </summary>
+        /// <returns>The value to go in the Authentication: header.</returns>
+        public string OAuthHeader(HttpMethod method, Uri url)
         {
-            // This is home-grown rather than using an off-the-shelf lib because
-            // https://www.bricklink.com/v3/api.page?page=auth
-            // states that this is "OAuth-like but simpler flow".
-
-            // We assume that we'll never POST form-encoded parameters
             OAuthParams(
                 HttpUtility.ParseQueryString(url.Query),
                 out string forSignature, out string forHeader);
 
-            string baseString = method.ToUpper()
-                                + '&' + NormaliseUri(url)
-                                + '&' + forSignature;
+            string baseString = 
+                method.Method.ToUpper()
+                + '&' + WebUtility.UrlEncode(NormaliseUri(url).ToString())
+                + '&' + WebUtility.UrlEncode(forSignature);
             
-            string key = ConsumerSecret + '&' + TokenSecret;
+            string key = _consumerSecret + '&' + _tokenSecret;
             HMACSHA1 hash = new(key: Encoding.ASCII.GetBytes(key));
             byte[] binarySig = hash.ComputeHash(
                 Encoding.ASCII.GetBytes(baseString)
@@ -151,24 +149,26 @@
             return header;
         }
 
-        public void Request()
+        public HttpRequestMessage ConstructRequest(HttpMethod method, string path)
         {
             HttpRequestMessage request = new(
-                method: HttpMethod.Get, 
-                requestUri: new Uri(BaseURI, "orders")
-            );
-            request.Headers.Add(
-                "Authorization",
-                OAuthHeader(
-                    method: request.Method.Method,
-                    url: request.RequestUri
-                )
+                method: method, 
+                requestUri: new Uri(baseUri: BaseURI, relativeUri: path)
             );
             request.Headers.Add("Accept", "application/json");
+            request.Headers.Add(
+                name: "Authorization",
+                value: OAuthHeader(method: request.Method, url: request.RequestUri)
+            );
+            return request;
+        }
 
+        public HttpResponseMessage SendRequest(HttpRequestMessage request)
+        {
             HttpResponseMessage response = Client.Send(request);
             response.EnsureSuccessStatusCode();
             CheckFakeRedirects(response);
+            return response;
         }
 
         private static void CheckFakeRedirects(HttpResponseMessage response)
