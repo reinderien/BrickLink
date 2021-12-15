@@ -12,4 +12,13 @@
       <ProjectReference Include="..\Client\Client.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Include="..\Tests\app.config">
+        <Link>app.config</Link>
+      </None>
+    </ItemGroup>
+
+    <Target Name="CopyConfig" AfterTargets="AfterBuild">
+        <Copy SourceFiles="app.config" DestinationFiles="$(TargetPath).config" />
+    </Target>
 </Project>

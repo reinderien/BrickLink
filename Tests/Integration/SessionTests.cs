@@ -1,6 +1,5 @@
 namespace BrickLink.Tests.Integration
 {
-    using System.Net.Http;
     using NUnit.Framework;
     
     using Client;
@@ -13,10 +12,7 @@ namespace BrickLink.Tests.Integration
         [Test]
         public void Request()
         {
-            HttpRequestMessage request = _session.ConstructRequest(
-                method: HttpMethod.Get, path: "orders"
-            );
-            Orders orders = Session.SendRequest<Orders>(request).Result;
+            Orders orders = Endpoints.GetOrders(_session).Result;
         }
     }
 }

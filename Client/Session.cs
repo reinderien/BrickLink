@@ -34,6 +34,10 @@
                 {"Accept", "application/json"},
                 {"Accept-Charset", "UTF-8"}
             },
+            // .NET ignores these when we make our own messages,
+            // but we set it for completeness
+            DefaultRequestVersion = MinHttpVersion,
+            DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
         };
 
         private readonly string _consumerKey, _tokenValue, _consumerSecret, _tokenSecret;
