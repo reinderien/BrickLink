@@ -27,7 +27,12 @@
         private static readonly HttpClient Client = new()
         {
             BaseAddress = BaseURI,
-            DefaultRequestHeaders = {{"Accept", "application/json"}},
+            DefaultRequestHeaders = {
+                // The server probably ignores these, and doesn't give a Content-Type back;
+                // but let's be good citizens anyway
+                {"Accept", "application/json"},
+                {"Accept-Charset", "UTF-8"}
+            },
         };
 
         private readonly string _consumerKey, _tokenValue, _consumerSecret, _tokenSecret;
@@ -145,10 +150,14 @@
                 + '&' + WebUtility.UrlEncode(forSignature);
             
             string key = _consumerSecret + '&' + _tokenSecret;
-            HMACSHA1 hash = new(key: Encoding.ASCII.GetBytes(key));
-            byte[] binarySig = hash.ComputeHash(
-                Encoding.ASCII.GetBytes(baseString)
-            );
+
+            byte[] binarySig;
+            using (HMACSHA1 hash = new(key: Encoding.ASCII.GetBytes(key)))
+            {
+                binarySig = hash.ComputeHash(
+                    Encoding.ASCII.GetBytes(baseString)
+                );
+            }
             string sig = WebUtility.UrlEncode(
                 Convert.ToBase64String(binarySig)
             );
@@ -167,16 +176,23 @@
             return request;
         }
 
-        public static TResponse SendRequest<TResponse>(HttpRequestMessage request)
+        public static async System.Threading.Tasks.Task<TResponse> 
+            SendRequest<TResponse>(HttpRequestMessage request)
             where TResponse: Models.Response.Response
         {
-            HttpResponseMessage message = Client.Send(request);
-            message.EnsureSuccessStatusCode();
-            CheckFakeRedirects(message);
-            
-            TResponse? response = System.Text.Json.JsonSerializer.Deserialize<TResponse>(
-                message.Content.ReadAsStream()
-            );
+            TResponse? response;
+            using (HttpResponseMessage message = await Client.SendAsync(request))
+            {
+                message.EnsureSuccessStatusCode();
+                CheckFakeRedirects(message);
+                using (System.IO.Stream stream = await message.Content.ReadAsStreamAsync())
+                {
+                    response = await System.Text.Json.JsonSerializer.DeserializeAsync<TResponse>(
+                        stream
+                    );
+                }
+            }
+
             if (response == null)
                 throw new APIException("Failed to deserialise JSON");
             if (!response.meta.IsSuccess)

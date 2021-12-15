@@ -16,7 +16,7 @@ namespace BrickLink.Tests.Integration
             HttpRequestMessage request = _session.ConstructRequest(
                 method: HttpMethod.Get, path: "orders"
             );
-            Orders orders = Session.SendRequest<Orders>(request);
+            Orders orders = Session.SendRequest<Orders>(request).Result;
         }
     }
 }
