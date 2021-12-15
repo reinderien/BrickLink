@@ -1,4 +1,4 @@
 ﻿namespace BrickLink.Client.Models.Response
 {
-    public record Response(Meta meta);
+    public abstract record Response(Meta meta);
 }

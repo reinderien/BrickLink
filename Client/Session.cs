@@ -170,28 +170,21 @@
             return request;
         }
 
-        public static void SendRequest(HttpRequestMessage request)
+        public static TResponse SendRequest<TResponse>(HttpRequestMessage request)
+        where TResponse: Response
         {
-            HttpResponseMessage response = Client.Send(request);
-            CheckErrors(response);
-        }
-
-        private static void CheckErrors(HttpResponseMessage response)
-        {
-            response.EnsureSuccessStatusCode();
-            CheckFakeRedirects(response);
-            CheckMeta(response);
-        }
-
-        private static void CheckMeta(HttpResponseMessage message)
-        {
-            Response? response = JsonSerializer.Deserialize<Response>(
+            HttpResponseMessage message = Client.Send(request);
+            message.EnsureSuccessStatusCode();
+            CheckFakeRedirects(message);
+            
+            TResponse? response = JsonSerializer.Deserialize<TResponse>(
                 message.Content.ReadAsStream()
             );
             if (response == null)
                 throw new APIException("Failed to deserialise JSON");
             if (!response.meta.IsSuccess)
                 throw new ResponseException(response.meta);
+            return response;
         }
 
         private static void CheckFakeRedirects(HttpResponseMessage response)
