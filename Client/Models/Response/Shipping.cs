@@ -6,7 +6,10 @@
     public record Shipping(
         int method_id,
         string method,
-        Address address
+        Address address,
+        // Not typically seen
+        string? tracking_no,
+        string? tracking_link
     )
     {
         [JsonConverter(typeof(DateTimeConverter))]

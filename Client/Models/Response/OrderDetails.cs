@@ -10,7 +10,9 @@
         bool drive_thru_sent,
         Shipping shipping,
         CostDetails cost,
-        CostDetails disp_cost
+        CostDetails disp_cost,
+        // Not typically seen
+        string? remarks
     ) : BaseOrder
     {
         [JsonConverter(typeof(DecimalConverter))]

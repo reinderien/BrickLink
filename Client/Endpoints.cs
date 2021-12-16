@@ -53,5 +53,10 @@
             Session session, int orderID
         ) => await Session.SendRequest<OrderDetailResponse>(
             session.ConstructRequest(HttpMethod.Get, $"orders/{orderID}"));
+
+        public static async Task<CategoryResponse> GetCategories(
+            Session session
+        ) => await Session.SendRequest<CategoryResponse>(
+            session.ConstructRequest(HttpMethod.Get, "categories"));
     }
 }
