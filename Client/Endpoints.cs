@@ -13,6 +13,19 @@
         @in,
         @out
     }
+
+    public enum ItemType
+    {
+        MINIFIG, 
+        PART,
+        SET,
+        BOOK,
+        GEAR,
+        CATALOG,
+        INSTRUCTION,
+        UNSORTED_LOT,
+        ORIGINAL_BOX 
+    }
     
     public static class Endpoints
     {
@@ -58,5 +71,36 @@
             Session session
         ) => await Session.SendRequest<CategoryResponse>(
             session.ConstructRequest(HttpMethod.Get, "categories"));
+
+        public static async Task<SubsetResponse> GetSubsets(
+            Session session,
+            ItemType itemType,
+            int itemID,
+            int? colorID = null,
+            bool? box = null,
+            bool? instruction = null,
+            bool? breakMinifigs = null,
+            bool? breakSubsets = null
+        )
+        {
+            NameValueCollection query = new();
+            if (colorID != null) 
+                query.Add("color_id", colorID.ToString());
+            if (box != null) 
+                query.Add("box", box.Value.ToString().ToLower());
+            if (instruction != null)
+                query.Add("instruction", instruction.Value.ToString().ToLower());
+            if (breakMinifigs != null)
+                query.Add("break_minifigs", breakMinifigs.Value.ToString().ToLower());
+            if (breakSubsets != null)
+                query.Add("break_subsets", breakSubsets.Value.ToString().ToLower());
+
+            return await Session.SendRequest<SubsetResponse>(
+                session.ConstructRequest(
+                    HttpMethod.Get,
+                    $"items/{itemType}/{itemID}/subsets"
+                )
+            );
+        }
     }
 }

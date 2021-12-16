@@ -19,6 +19,6 @@
     </ItemGroup>
 
     <Target Name="CopyConfig" AfterTargets="AfterBuild">
-        <Copy SourceFiles="app.config" DestinationFiles="$(TargetPath).config" />
+        <Copy SourceFiles="..\Tests\app.config" DestinationFiles="$(TargetPath).config" />
     </Target>
 </Project>
