@@ -16,12 +16,6 @@
             Category sw_cat = categories.data
                 .First(cat => 
                     cat.category_name.ToLower() == "star wars");
-
-            // Empty. Probably because "catalog" and "category" are not the same thing
-            SubsetResponse subsets = Endpoints.GetSubsets(
-                session: session,
-                itemType: ItemType.CATALOG,
-                itemID: sw_cat.category_id).Result;
         }
     }
 }

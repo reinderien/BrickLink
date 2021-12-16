@@ -67,7 +67,7 @@
         public static async Task<SubsetResponse> GetSubsets(
             Session session,
             ItemType itemType,
-            int itemID,
+            string itemNumber,
             int? colorID = null,
             bool? box = null,
             bool? instruction = null,
@@ -90,7 +90,7 @@
             return await Session.SendRequest<SubsetResponse>(
                 session.ConstructRequest(
                     HttpMethod.Get,
-                    $"items/{itemType}/{itemID}/subsets"
+                    $"items/{itemType}/{itemNumber}/subsets"
                 )
             );
         }
