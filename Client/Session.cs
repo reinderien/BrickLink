@@ -144,7 +144,7 @@
                 merged = merged.Concat(FlattenNameValue(queryAndFormParams));
 
             merged = merged
-                .Select(EncodeKV)
+                .Select(EncodePair)
                 .OrderBy(kv => kv.Key)
                 .ThenBy(kv => kv.Value)
                 .ToList();
@@ -209,16 +209,16 @@
                 );
         }
 
-        private static KeyValuePair<string, string> EncodeKV(KeyValuePair<string, string> kv)
+        private static KeyValuePair<string, string> EncodePair(KeyValuePair<string, string> pair)
         {
             return new(
-                key: HttpUtility.UrlEncode(kv.Key),
-                value: HttpUtility.UrlEncode(kv.Value)
+                key: HttpUtility.UrlEncode(pair.Key),
+                value: HttpUtility.UrlEncode(pair.Value)
             );
         }
 
-        private static string PairToString(KeyValuePair<string, string> kv) =>
-            kv.Key + '=' + kv.Value;
+        private static string PairToString(KeyValuePair<string, string> pair) =>
+            pair.Key + '=' + pair.Value;
 
         private static Uri BuildUri(string path, NameValueCollection? query)
         {
@@ -232,7 +232,7 @@
                 Query = string.Join(
                     '&',
                     FlattenNameValue(query)
-                    .Select(EncodeKV)
+                    .Select(EncodePair)
                     .Select(PairToString)
                 )
             };

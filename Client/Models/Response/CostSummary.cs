@@ -2,7 +2,7 @@
 {
     using System.Text.Json.Serialization;
     
-    public record Cost
+    public record CostSummary
     {
         public string currency_code { get; init; }
         

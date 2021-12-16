@@ -16,7 +16,7 @@
     
     public static class Endpoints
     {
-        public static async Task<Orders> GetOrders(
+        public static async Task<OrderSummaryResponse> GetOrders(
             Session session,
             OrderDirection direction = OrderDirection.@in,
             bool filed = false,
@@ -45,8 +45,13 @@
                 query.Add("status", statusFilter);
             }
 
-            return await Session.SendRequest<Orders>(
+            return await Session.SendRequest<OrderSummaryResponse>(
                 session.ConstructRequest(HttpMethod.Get, "orders", query));
         }
+
+        public static async Task<OrderDetailResponse> GetOrder(
+            Session session, int orderID
+        ) => await Session.SendRequest<OrderDetailResponse>(
+            session.ConstructRequest(HttpMethod.Get, $"orders/{orderID}"));
     }
 }

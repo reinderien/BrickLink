@@ -2,8 +2,8 @@
 {
     using System.Collections.Generic;
 
-    public record Orders(
+    public record OrderSummaryResponse(
         Meta meta,
-        IReadOnlyCollection<Order> data
+        IReadOnlyCollection<OrderSummary> data
     ) : Response(meta) {}
 }

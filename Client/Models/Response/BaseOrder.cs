@@ -23,7 +23,7 @@
         CANCELLED
     }
     
-    public record Order {
+    public abstract record BaseOrder {
         public int order_id { get; init; }
         
         [JsonConverter(typeof(DateTimeConverter))]
@@ -47,7 +47,5 @@
         public bool vat_collected_by_bl { get; init; }
         
         public Payment payment { get; init; }
-        public Cost cost { get; init; }
-        public Cost disp_cost { get; init; }
     }
 }

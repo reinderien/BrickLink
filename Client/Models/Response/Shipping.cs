@@ -2,14 +2,14 @@
 {
     using System;
     using System.Text.Json.Serialization;
-
-    public record Payment(
+    
+    public record Shipping(
+        int method_id,
         string method,
-        string currency_code,
-        string status
+        Address address
     )
     {
         [JsonConverter(typeof(DateTimeConverter))]
-        public DateTime date_paid { get; init; }
+        public DateTime date_shipped { get; init; }
     }
 }
