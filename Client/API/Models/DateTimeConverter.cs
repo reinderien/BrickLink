@@ -1,4 +1,4 @@
-﻿namespace BrickLink.Client.Models
+﻿namespace BrickLink.Client.API.Models
 {  
     using System;
     using System.Globalization;

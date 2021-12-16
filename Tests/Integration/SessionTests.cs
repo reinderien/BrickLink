@@ -2,8 +2,8 @@ namespace BrickLink.Tests.Integration
 {
     using NUnit.Framework;
     
-    using Client;
-    using Client.Models.Response;
+    using Client.API;
+    using Client.API.Models.Response;
     
     public class SessionTests
     {

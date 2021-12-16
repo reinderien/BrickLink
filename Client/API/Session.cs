@@ -1,4 +1,4 @@
-﻿namespace BrickLink.Client
+﻿namespace BrickLink.Client.API
 {
     using System;
     using System.Collections.Generic;
@@ -10,36 +10,13 @@
     using System.Text;
     using System.Web;
     
-
-    public record Session
+    using Client;
+    
+    public record Session : HttpPool
     {
         private const string Realm = "https://api.bricklink.com/api/store/v3/";
         private static readonly Uri BaseURI = new(Realm);
-        private static readonly Version MinHttpVersion = new(2, 0);
         
-        /*
-        .NET really wants one of these per application, mainly because this is where connection
-        pooling occurs. Unfortunately, this makes it difficult to separate out cookie jars; the
-        cookie container lives on the handler created implicitly on client construction. The
-        cookies - currently AWSALB and AWSALBCORS - are for AWS load-balancing.
-        If this changes and cookies are introduced that have some meaning for an individual
-        authenticated user, we'd have to get more creative and probably make our own handler.
-        */
-        private static readonly HttpClient Client = new()
-        {
-            BaseAddress = BaseURI,
-            DefaultRequestHeaders = {
-                // The server probably ignores these, and doesn't give a Content-Type back;
-                // but let's be good citizens anyway
-                {"Accept", "application/json"},
-                {"Accept-Charset", "UTF-8"}
-            },
-            // .NET ignores these when we make our own messages,
-            // but we set it for completeness
-            DefaultRequestVersion = MinHttpVersion,
-            DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher
-        };
-
         private readonly string _consumerKey, _tokenValue, _consumerSecret, _tokenSecret;
             
         /// <summary>
@@ -67,13 +44,16 @@
         public HttpRequestMessage ConstructRequest(HttpMethod method, string path, NameValueCollection? query = null)
         {
             Uri url = BuildUri(path, query);
-            HttpRequestMessage request = new(method: method, requestUri: url)
-            {
-                // This is required because the client's default version stuff is
-                // ignored when we make our own message (rather than GetAsync etc.)
-                Version = MinHttpVersion
-            };
+            HttpRequestMessage request = ConstructRequest();
+            request.Method = method;
+            request.RequestUri = url;
             request.Headers.Authorization = OAuthHeader(method, url, query);
+            
+            // The API server probably ignores these, and doesn't give a Content-Type back;
+            // but let's be good citizens anyway
+            request.Headers.Add("Accept", "application/json");
+            request.Headers.Add("Accept-Charset", "UTF-8");
+
             return request;
         }
 
@@ -195,31 +175,6 @@
             return new(scheme: "OAuth", parameter: param);
         }
 
-        private static IEnumerable<KeyValuePair<string, string>> FlattenNameValue(NameValueCollection collection)
-        {
-            return collection
-                .Cast<string>()
-                .SelectMany(
-                    key =>
-                        // We're already iterating over keys, so this will never be null; hence !
-                        collection.GetValues(key)!
-                        .Select(
-                            value => new KeyValuePair<string, string>(key, value)
-                        )
-                );
-        }
-
-        private static KeyValuePair<string, string> EncodePair(KeyValuePair<string, string> pair)
-        {
-            return new(
-                key: HttpUtility.UrlEncode(pair.Key),
-                value: HttpUtility.UrlEncode(pair.Value)
-            );
-        }
-
-        private static string PairToString(KeyValuePair<string, string> pair) =>
-            pair.Key + '=' + pair.Value;
-
         private static Uri BuildUri(string path, NameValueCollection? query)
         {
             Uri preQuery = new(baseUri: BaseURI, relativeUri: path);
@@ -227,16 +182,7 @@
                 throw new ClientException($"Path {path} must not contain a query");
             if (query == null) return preQuery;
             
-            UriBuilder builder = new(preQuery)
-            {
-                Query = string.Join(
-                    '&',
-                    FlattenNameValue(query)
-                    .Select(EncodePair)
-                    .Select(PairToString)
-                )
-            };
-            return builder.Uri;
+            return BuilderForQuery(preQuery, query).Uri;
         }
         
         private static Uri NormaliseUri(Uri uri)

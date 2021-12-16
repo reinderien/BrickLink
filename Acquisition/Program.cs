@@ -2,9 +2,10 @@
 {
     using System.Linq;
     
-    using Client;
-    using Client.Models.Response;
-
+    using Client.API;
+    using Client.API.Models.Response;
+    using Client.Scrape;
+    
     public static class Program
     {
         public static void Main()
@@ -16,6 +17,8 @@
             Category sw_cat = categories.data
                 .First(cat => 
                     cat.category_name.ToLower() == "star wars");
+
+            Pages.Search(sw_cat.category_id);
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace BrickLink.Client
+﻿namespace BrickLink.Client.API
 {
     using System.Collections.Generic;
     using System.Collections.Specialized;

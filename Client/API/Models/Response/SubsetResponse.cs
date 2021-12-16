@@ -1,4 +1,4 @@
-﻿namespace BrickLink.Client.Models.Response
+﻿namespace BrickLink.Client.API.Models.Response
 {
     public record SubsetResponse(
         Meta meta,

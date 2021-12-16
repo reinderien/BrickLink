@@ -5,7 +5,7 @@
     using System.Text.Json;
     using NUnit.Framework;
     
-    using Client.Models.Response;
+    using Client.API.Models.Response;
 
     public class OrdersTest
     {
