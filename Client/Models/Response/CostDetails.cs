@@ -35,7 +35,7 @@
         [JsonConverter(typeof(DecimalConverter))]
         public decimal vat_amount { get; init; }
 
-        #region Typically not seen from server
+        #region Documented but typically not seen from server
 
         [JsonConverter(typeof(DecimalConverter))]
         public decimal? salesTax_collected_by_BL { get; init; }
