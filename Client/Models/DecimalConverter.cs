@@ -8,7 +8,10 @@
     {
         public override decimal Read(
             ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options
-        ) => decimal.Parse(reader.GetString());
+        ) => decimal.Parse(
+            reader.GetString() ??
+            throw new NullReferenceException("Decimal must not be null")
+        );
 
         public override void Write(
             Utf8JsonWriter writer, decimal value, JsonSerializerOptions options

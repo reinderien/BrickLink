@@ -1,7 +1,7 @@
 ﻿namespace BrickLink.Client.Models.Response
 {
     public record OrderDetailResponse(
-        Meta meta, 
+        Meta meta,
         OrderDetails data
-    ) : Response(meta) {}
+    ) : Response(meta);
 }

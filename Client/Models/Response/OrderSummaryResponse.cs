@@ -5,5 +5,5 @@
     public record OrderSummaryResponse(
         Meta meta,
         IReadOnlyCollection<OrderSummary> data
-    ) : Response(meta) {}
+    ) : Response(meta);
 }

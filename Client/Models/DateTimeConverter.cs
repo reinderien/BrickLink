@@ -12,7 +12,8 @@
         public override DateTime Read(
             ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options
         ) => DateTime.ParseExact(
-            s: reader.GetString(),
+            s: reader.GetString() ?? 
+               throw new NullReferenceException("Date must not be null"),
             format: Format,
             provider: CultureInfo.InvariantCulture,
             style: DateTimeStyles.AdjustToUniversal

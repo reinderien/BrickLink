@@ -128,7 +128,7 @@
                 .ToUnixTimeSeconds().ToString()
             },
             {"oauth_token", _tokenValue},
-            {"oauth_version", "1.0"},
+            {"oauth_version", "1.0"}
         };
 
         private void OAuthParams(
