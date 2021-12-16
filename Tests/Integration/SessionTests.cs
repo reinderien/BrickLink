@@ -12,7 +12,10 @@ namespace BrickLink.Tests.Integration
         [Test]
         public void Request()
         {
-            Orders orders = Endpoints.GetOrders(_session).Result;
+            Orders orders = Endpoints.GetOrders(
+                _session,
+                excludedStatuses: new[] {OrderStatus.COMPLETED}
+            ).Result;
         }
     }
 }

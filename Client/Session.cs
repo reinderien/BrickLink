@@ -42,6 +42,11 @@
 
         private readonly string _consumerKey, _tokenValue, _consumerSecret, _tokenSecret;
             
+        /// <summary>
+        /// Construct a session providing all of the authentication parameters given to you when
+        /// you make a token on the BrickLink site. For convenience, if you want these to be filled
+        /// from a config file, use ConfiguredSession instead.
+        /// </summary>
         public Session(string consumerKey, string tokenValue, string consumerSecret, string tokenSecret)
         {
             _consumerKey = consumerKey;
@@ -50,12 +55,62 @@
             _tokenSecret = tokenSecret;
         }
 
-        private static KeyValuePair<string, string> EncodeKV(KeyValuePair<string, string> kv)
+        /// <summary>
+        /// Make a request object authenticated and ready to be sent.
+        /// </summary>
+        /// <param name="method">Any method.</param>
+        /// <param name="path">
+        /// A relative path after the version component of the URL. Don't include a query in this.
+        /// </param>
+        /// <param name="query">Optional query parameters; will be encoded.</param>
+        /// <returns>A request message intended for use in SendRequest().</returns>
+        public HttpRequestMessage ConstructRequest(HttpMethod method, string path, NameValueCollection? query = null)
         {
-            return new(
-                key: HttpUtility.UrlEncode(kv.Key),
-                value: HttpUtility.UrlEncode(kv.Value)
-            );
+            Uri url = BuildUri(path, query);
+            HttpRequestMessage request = new(method: method, requestUri: url)
+            {
+                // This is required because the client's default version stuff is
+                // ignored when we make our own message (rather than GetAsync etc.)
+                Version = MinHttpVersion
+            };
+            request.Headers.Authorization = OAuthHeader(method, url, query);
+            return request;
+        }
+
+        /// <summary>
+        /// Asynchronously send an OAuth-authenticated request. 
+        /// </summary>
+        /// <typeparam name="TResponse">The response type to deserialise.</typeparam>
+        /// <param name="request">A request from ConstructRequest().</param>
+        /// <returns>A response POCO including all metadata.</returns>
+        /// <exception cref="APIException">On internal JSON deserialisation failure</exception>
+        /// <exception cref="ResponseException">if the JSON body includes an error code</exception>
+        /// <exception cref="HttpRequestException">
+        /// if the HTTP request itself failed with an error code, or if the server lied about a
+        /// redirect to an error page with an error code.
+        /// </exception>
+        public static async System.Threading.Tasks.Task<TResponse> 
+            SendRequest<TResponse>(HttpRequestMessage request)
+            where TResponse: Models.Response.Response
+        {
+            TResponse? response;
+            using (HttpResponseMessage message = await Client.SendAsync(request))
+            {
+                message.EnsureSuccessStatusCode();
+                CheckFakeRedirects(message);
+                await using (System.IO.Stream stream = await message.Content.ReadAsStreamAsync())
+                {
+                    response = await System.Text.Json.JsonSerializer.DeserializeAsync<TResponse>(
+                        stream
+                    );
+                }
+            }
+
+            if (response == null)
+                throw new APIException("Failed to deserialise JSON");
+            if (!response.meta.IsSuccess)
+                throw new ResponseException(response.meta);
+            return response;
         }
 
         private SortedDictionary<string, string> BaseOAuthParams => new() {
@@ -70,62 +125,31 @@
             {
                 "oauth_timestamp", 
                 ((DateTimeOffset) DateTime.UtcNow)
-                .ToUnixTimeSeconds()
-                .ToString()
+                .ToUnixTimeSeconds().ToString()
             },
             {"oauth_token", _tokenValue},
             {"oauth_version", "1.0"},
         };
 
-        private static Uri NormaliseUri(Uri uri)
-        {
-            UriBuilder builder = new()
-            {
-                Scheme = uri.Scheme.ToLower(),
-                Host = uri.Host,
-                Path = uri.AbsolutePath
-            };
-            if (!uri.IsDefaultPort)
-                builder.Port = uri.Port;
-            return builder.Uri;
-        }
-
-        private static IEnumerable<KeyValuePair<string, string>> FlattenNameValue(NameValueCollection collection)
-        {
-            return collection
-                .Cast<string>()
-                .SelectMany(
-                    key =>
-                        // We're already iterating over keys, so this will never be null; hence !
-                        collection.GetValues(key)!
-                        .Select(
-                            value => new KeyValuePair<string, string>(key, value)
-                        )
-                );
-        }
-
         private void OAuthParams(
-            NameValueCollection queryAndFormParams,
+            NameValueCollection? queryAndFormParams,
             out string signatureParams,
             out string headerParams
         )
         {
             // See https://oauth.net/core/1.0 for parameter normalisation
-            
-            List<KeyValuePair<string, string>> merged =
-                FlattenNameValue(queryAndFormParams)
-                .Concat(BaseOAuthParams)
+
+            IEnumerable<KeyValuePair<string, string>> merged = BaseOAuthParams;
+            if (queryAndFormParams != null)
+                merged = merged.Concat(FlattenNameValue(queryAndFormParams));
+
+            merged = merged
                 .Select(EncodeKV)
                 .OrderBy(kv => kv.Key)
                 .ThenBy(kv => kv.Value)
                 .ToList();
 
-            signatureParams = string.Join(
-                '&',
-                merged.Select(
-                    kv => kv.Key + '=' + kv.Value
-                )
-            );
+            signatureParams = string.Join('&', merged.Select(PairToString));
             headerParams = string.Join(
                 ", ",
                 merged.Select(
@@ -143,11 +167,9 @@
         /// states that this is "OAuth-like but simpler flow".
         /// </summary>
         private System.Net.Http.Headers.AuthenticationHeaderValue
-            OAuthHeader(HttpMethod method, Uri url)
+            OAuthHeader(HttpMethod method, Uri url, NameValueCollection? query)
         {
-            OAuthParams(
-                HttpUtility.ParseQueryString(url.Query),
-                out string forSignature, out string forHeader);
+            OAuthParams(query, out string forSignature, out string forHeader);
 
             string baseString = 
                 method.Method.ToUpper()
@@ -173,41 +195,61 @@
             return new(scheme: "OAuth", parameter: param);
         }
 
-        public HttpRequestMessage ConstructRequest(HttpMethod method, string path)
+        private static IEnumerable<KeyValuePair<string, string>> FlattenNameValue(NameValueCollection collection)
         {
-            Uri url = new(baseUri: BaseURI, relativeUri: path);
-            HttpRequestMessage request = new(method: method, requestUri: url)
-            {
-                // This is required because the client's default version stuff is
-                // ignored when we make our own message (rather than GetAsync etc.)
-                Version = MinHttpVersion
-            };
-            request.Headers.Authorization = OAuthHeader(method: method, url: url);
-            return request;
+            return collection
+                .Cast<string>()
+                .SelectMany(
+                    key =>
+                        // We're already iterating over keys, so this will never be null; hence !
+                        collection.GetValues(key)!
+                        .Select(
+                            value => new KeyValuePair<string, string>(key, value)
+                        )
+                );
         }
 
-        public static async System.Threading.Tasks.Task<TResponse> 
-            SendRequest<TResponse>(HttpRequestMessage request)
-            where TResponse: Models.Response.Response
+        private static KeyValuePair<string, string> EncodeKV(KeyValuePair<string, string> kv)
         {
-            TResponse? response;
-            using (HttpResponseMessage message = await Client.SendAsync(request))
-            {
-                message.EnsureSuccessStatusCode();
-                CheckFakeRedirects(message);
-                using (System.IO.Stream stream = await message.Content.ReadAsStreamAsync())
-                {
-                    response = await System.Text.Json.JsonSerializer.DeserializeAsync<TResponse>(
-                        stream
-                    );
-                }
-            }
+            return new(
+                key: HttpUtility.UrlEncode(kv.Key),
+                value: HttpUtility.UrlEncode(kv.Value)
+            );
+        }
 
-            if (response == null)
-                throw new APIException("Failed to deserialise JSON");
-            if (!response.meta.IsSuccess)
-                throw new ResponseException(response.meta);
-            return response;
+        private static string PairToString(KeyValuePair<string, string> kv) =>
+            kv.Key + '=' + kv.Value;
+
+        private static Uri BuildUri(string path, NameValueCollection? query)
+        {
+            Uri preQuery = new(baseUri: BaseURI, relativeUri: path);
+            if (!string.IsNullOrEmpty(preQuery.Query))
+                throw new ClientException($"Path {path} must not contain a query");
+            if (query == null) return preQuery;
+            
+            UriBuilder builder = new(preQuery)
+            {
+                Query = string.Join(
+                    '&',
+                    FlattenNameValue(query)
+                    .Select(EncodeKV)
+                    .Select(PairToString)
+                )
+            };
+            return builder.Uri;
+        }
+        
+        private static Uri NormaliseUri(Uri uri)
+        {
+            UriBuilder builder = new()
+            {
+                Scheme = uri.Scheme.ToLower(),
+                Host = uri.Host,
+                Path = uri.AbsolutePath
+            };
+            if (!uri.IsDefaultPort)
+                builder.Port = uri.Port;
+            return builder.Uri;
         }
 
         private static void CheckFakeRedirects(HttpResponseMessage response)
