@@ -15,14 +15,23 @@
         SHIPPED,
         RECEIVED,
         COMPLETED,
-        OCR,  // Order cancel request
-        NPB,  // Non-paying buyer alert
-        NPX,  // Non-paying buyer alert, accepted
-        NRS,  // Non-responding seller alert
-        NSS,  // Non-shipping seller alert
-        CANCELLED
+        CANCELLED,
+        
+        // The actual API names. These names take precedence for ToString().
+        OCR,
+        NPB,
+        NPX,
+        NRS,
+        NSS,
+        
+        // Friendly aliases for API names
+        ORDER_CANCEL_REQUEST = OCR,
+        NON_PAYING_BUYER = NPB,
+        NON_PAYING_BUYER_ACCEPTED = NPX,
+        NON_RESPONDING_SELLER = NRS,
+        NON_SHIPPING_SELLER = NSS
     }
-    
+
     public abstract record BaseOrder {
         public int order_id { get; init; }
         

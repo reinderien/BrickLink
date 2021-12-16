@@ -13,19 +13,6 @@
         @in,
         @out
     }
-
-    public enum ItemType
-    {
-        MINIFIG, 
-        PART,
-        SET,
-        BOOK,
-        GEAR,
-        CATALOG,
-        INSTRUCTION,
-        UNSORTED_LOT,
-        ORIGINAL_BOX 
-    }
     
     public static class Endpoints
     {
@@ -67,6 +54,11 @@
         ) => await Session.SendRequest<OrderDetailResponse>(
             session.ConstructRequest(HttpMethod.Get, $"orders/{orderID}"));
 
+        public static async Task<OrderItemsResponse> GetOrderItems(
+            Session session, int orderID
+        ) => await Session.SendRequest<OrderItemsResponse>(
+            session.ConstructRequest(HttpMethod.Get, $"orders/{orderID}/items"));
+            
         public static async Task<CategoryResponse> GetCategories(
             Session session
         ) => await Session.SendRequest<CategoryResponse>(

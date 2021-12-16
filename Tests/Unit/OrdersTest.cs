@@ -32,5 +32,15 @@
             
             Assert.AreEqual(17318681, order.order_id);
         }
+
+        [Test]
+        public void EnumPriority()
+        {
+            Assert.AreEqual("OCR", OrderStatus.ORDER_CANCEL_REQUEST.ToString());
+            Assert.AreEqual("OCR", OrderStatus.OCR.ToString());
+            
+            Assert.AreEqual("U", UsedStatus.Used.ToString());
+            Assert.AreEqual("U", UsedStatus.U.ToString());
+        }
     }
 }

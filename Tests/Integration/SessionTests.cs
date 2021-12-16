@@ -23,5 +23,11 @@ namespace BrickLink.Tests.Integration
         {
             OrderDetailResponse orderDetails = Endpoints.GetOrder(_session, orderID: 17318681).Result;
         }
+        
+        [Test]
+        public void GetOrderItems()
+        {
+            OrderItemsResponse items = Endpoints.GetOrderItems(_session, orderID: 17318681).Result;
+        }
     }
 }
