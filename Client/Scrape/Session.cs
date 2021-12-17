@@ -10,7 +10,7 @@
 
     public record Session : HttpPool
     {
-        private static readonly Uri BaseURI = new("https://www.bricklink.com/");
+        public static readonly Uri BaseURI = new("https://www.bricklink.com/");
 
         public static HttpRequestMessage ConstructRequest(HttpMethod method, string path,
             NameValueCollection? query = null)
