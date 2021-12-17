@@ -132,5 +132,14 @@
                 ).Select((anchor, index) => Category.FromNode(anchor, index, root))
                 .ToImmutableList();
         }
+
+        public override string ToString() =>
+            $"{TypeName}: "
+            + string.Join(
+                '/',
+                Categories
+                    .Select(cat => cat.Name)
+                    .Append(Name)
+            );
     }
 }

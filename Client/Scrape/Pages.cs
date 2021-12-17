@@ -4,15 +4,16 @@
     using System.Collections.Immutable;
     using System.Linq;
     using System.Net.Http;
+    using System.Threading.Tasks;
     using HtmlAgilityPack;
     
     using Models;
 
     public static class Pages
     {
-        public static void Search(int categoryID)
+        public static async Task<IEnumerable<Item>> Search(int categoryID)
         {
-            HtmlDocument doc = Session.SendRequest(
+            HtmlDocument doc = await Session.SendRequest(
                 Session.ConstructRequest(
                     HttpMethod.Get,
                     "catalogList.asp",
@@ -22,7 +23,7 @@
                         {"catString", categoryID.ToString()}
                     }
                 )
-            ).Result;
+            );
 
             HtmlNode resultTable = doc.DocumentNode.SelectSingleNode(
                 "//form[@id='ItemEditForm']//table//table");
@@ -32,10 +33,8 @@
                     .Select((node, index) => new KeyValuePair<string, int>(node.InnerText, index))
                     .ToImmutableDictionary();
 
-            List<Item> items =
-                resultTable.SelectNodes("./tr[position() > 1]")
-                    .Select(row => Item.FromNode(row, headings, Session.BaseURI))
-                    .ToList();
+            return resultTable.SelectNodes("./tr[position() > 1]")
+                    .Select(row => Item.FromNode(row, headings, Session.BaseURI));
         }
     }
 }
