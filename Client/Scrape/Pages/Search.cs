@@ -14,14 +14,29 @@
         Set, Part, Minifigure, Book, Gear, Catalog, Instruction, OriginalBox
     }
 
+    internal enum ItemTypeNetwork
+    { 
+        S,  P,  M,  B,  G,  C,  I,  O, 
+    }
+
     public enum SortBy
     {
         Name, Number, Date, Year, PartCount
     }
 
+    internal enum SortByNetwork
+    {
+        N, I, D, Y, P,       
+    }
+
     public enum SortDirection
     {
         Ascending, Descending,    
+    }
+
+    internal enum SortDirectionNetwork
+    {
+        A, D
     }
     
     public record Search(
@@ -44,40 +59,9 @@
     {
         private const bool EnableImages = true;
         
-        private static readonly ImmutableDictionary<ItemType, char> ItemTypeNames =
-            new Dictionary<ItemType, char>()
-        {
-            { ItemType.Set        , 'S' },
-            { ItemType.Part       , 'P' },
-            { ItemType.Minifigure , 'M' },
-            { ItemType.Book       , 'B' },
-            { ItemType.Gear       , 'G' },
-            { ItemType.Catalog    , 'C' },
-            { ItemType.Instruction, 'I' },
-            { ItemType.OriginalBox, 'O' },
-        }.ToImmutableDictionary();
-
-        private static readonly ImmutableDictionary<SortBy, char> SortByNames =
-            new Dictionary<SortBy, char>()
-        {
-            { SortBy.Name     , 'N' },
-            { SortBy.Number   , 'I' },
-            { SortBy.Date     , 'D' },
-            { SortBy.Year     , 'Y' },
-            { SortBy.PartCount, 'P' },
-        }.ToImmutableDictionary();
-
-        private static readonly ImmutableDictionary<SortDirection, char> SortDirectionNames = 
-            new Dictionary<SortDirection, char>()
-        {                                                                                     
-            { SortDirection.Ascending , 'A' },                                                        
-            { SortDirection.Descending, 'D' },                                                                                                                                                                                                                          
-        }.ToImmutableDictionary();   
-        
-
         public async IAsyncEnumerable<Item> SearchDepaginateAsync()
         {
-            NamedStrings query = RequestQuery;
+            NullDroppingQuery query = RequestQuery;
             
             for (int page = 1;; page++)
             {
@@ -90,21 +74,8 @@
                 if (IsLastPage(doc)) break;
             }
         }
-
-        private class NamedStrings : NameValueCollection 
-        {
-            public void Add(string key, object? value)
-            {
-                if (value != null) base.Add(key, value.ToString());
-            }
-
-            public void Set(string key, object? value)
-            {
-                if (value != null) base.Set(key, value.ToString());
-            }
-        }
         
-        private NamedStrings RequestQuery => new()
+        private NullDroppingQuery RequestQuery => new()
         {
             {"sz", ItemsPerPage},
             {"v", EnableImages ? 1 : 0},
@@ -117,9 +88,9 @@
             {"q", Query},
             {"searchName", QueryName ? 'Y' : 'N'},
             {"searchNo", QueryNumber ? 'Y' : 'N'},
-            {"sortBy", SortByNames[SortBy]},
-            {"sortAsc", SortDirectionNames[SortDirection]},
-            {"catType", Type == null ? null : ItemTypeNames[Type.Value]},
+            {"sortBy", (SortByNetwork)SortBy},
+            {"sortAsc", (SortDirectionNetwork)SortDirection},
+            {"catType", (ItemTypeNetwork?)Type},
             {"itemYear", Year},
         };
         

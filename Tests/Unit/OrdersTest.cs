@@ -5,6 +5,7 @@
     using System.Text.Json;
     using NUnit.Framework;
     
+    using Client.API.Models;
     using Client.API.Models.Response;
 
     public class OrdersTest
@@ -36,12 +37,11 @@
         [Test]
         public void EnumPriority()
         {
-            Assert.Fail("This is actually not trustworthy; enum priority is undefined");
-            Assert.AreEqual("OCR", OrderStatus.ORDER_CANCEL_REQUEST.ToString());
-            Assert.AreEqual("OCR", OrderStatus.OCR.ToString());
+            Assert.AreEqual("OCR",
+                ((OrderStatusNetwork)OrderStatus.ORDER_CANCEL_REQUEST).ToString());
             
-            Assert.AreEqual("U", UsedStatus.Used.ToString());
-            Assert.AreEqual("U", UsedStatus.U.ToString());
+            Assert.AreEqual("U", 
+                ((UsedStatusNetwork)UsedStatus.Used).ToString());
         }
     }
 }

@@ -4,33 +4,20 @@
     using System.Text.Json.Serialization;
   
     // https://www.bricklink.com/help.asp?helpID=41&q=order+status
+    public enum OrderStatusNetwork
+    {
+        PENDING, UPDATED, PROCESSING, READY, PAID, PACKED, SHIPPED, RECEIVED, COMPLETED, CANCELLED,
+        OCR, NPB, NPX, NRS, NSS,
+    }
+    
     public enum OrderStatus
     {
-        PENDING,
-        UPDATED,
-        PROCESSING,
-        READY,
-        PAID,
-        PACKED,
-        SHIPPED,
-        RECEIVED,
-        COMPLETED,
-        CANCELLED,
-        
-        // todo - precedences are non-deterministic
-        // The actual API names. These names take precedence for ToString().
-        OCR,
-        NPB,
-        NPX,
-        NRS,
-        NSS,
-        
-        // Friendly aliases for API names
-        ORDER_CANCEL_REQUEST = OCR,
-        NON_PAYING_BUYER = NPB,
-        NON_PAYING_BUYER_ACCEPTED = NPX,
-        NON_RESPONDING_SELLER = NRS,
-        NON_SHIPPING_SELLER = NSS
+        PENDING, UPDATED, PROCESSING, READY, PAID, PACKED, SHIPPED, RECEIVED, COMPLETED, CANCELLED,
+        ORDER_CANCEL_REQUEST,
+        NON_PAYING_BUYER,
+        NON_PAYING_BUYER_ACCEPTED,
+        NON_RESPONDING_SELLER,
+        NON_SHIPPING_SELLER
     }
 
     public abstract record BaseOrder {
@@ -47,7 +34,7 @@
         public string buyer_name { get; init; }
         
         [JsonConverter(typeof(JsonStringEnumConverter))]
-        public OrderStatus status { get; init; }
+        public OrderStatusNetwork status { get; init; }
         
         public int total_count { get; init; }
         public int unique_count { get; init; }

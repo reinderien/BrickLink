@@ -32,10 +32,10 @@
                 string statusFilter = string.Join(
                     ',',
                     (includedStatuses ?? empty)
-                    .Select(status => status.ToString())
+                    .Select(status => ((OrderStatusNetwork)status).ToString())
                     .Concat(
                         (excludedStatuses ?? empty)
-                        .Select(status => '-' + status.ToString())
+                        .Select(status => '-' + ((OrderStatusNetwork)status).ToString())
                     )
                 );
                 query.Set("status", statusFilter);
@@ -71,17 +71,14 @@
             bool? breakSubsets = null
         )
         {
-            NameValueCollection query = new();
-            if (colorID != null) 
-                query.Set("color_id", colorID.ToString());
-            if (box != null) 
-                query.Set("box", box.Value.ToString().ToLower());
-            if (instruction != null)
-                query.Set("instruction", instruction.Value.ToString().ToLower());
-            if (breakMinifigs != null)
-                query.Set("break_minifigs", breakMinifigs.Value.ToString().ToLower());
-            if (breakSubsets != null)
-                query.Set("break_subsets", breakSubsets.Value.ToString().ToLower());
+            NullDroppingQuery query = new()
+            {
+                {"color_id", colorID},
+                {"box", box?.ToString()?.ToLower()},
+                {"instruction", instruction?.ToString()?.ToLower()},
+                {"break_minifigs", breakMinifigs?.ToString()?.ToLower()},
+                {"break_subsets", breakSubsets?.ToString()?.ToLower()},
+            };
 
             return await Session.SendRequestAsync<SubsetResponse>(
                 session.ConstructRequest(
@@ -89,6 +86,16 @@
                     $"items/{itemType}/{itemNumber}/subsets"
                 )
             );
+        }
+
+        public static async Task<PriceResponse> GetPrice(
+            ItemType itemType,
+            string number,
+            int? colorID = null,
+            GuideType guideType = GuideType.stock
+        )
+        {
+            throw new NotImplementedException();
         }
     }
 }

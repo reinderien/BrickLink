@@ -2,24 +2,15 @@
 {
     using System;
     using System.Text.Json.Serialization;
-
-    public enum UsedStatus
+    
+    public enum CompletenessNetwork
     {
-        // todo - precedences are non-deterministic
-        // Actual API names
-        N, U,
-        // Friendly aliases
-        New = N,
-        Used = U
+        C, B, S,
     }
 
     public enum Completeness
     {
-        // todo - precedences are non-deterministic
-        C, B, S,
-        Complete = C,
-        Incomplete = B,
-        Sealed = S
+        Complete, Incomplete, Sealed
     }
     
     public record OrderItem(
@@ -36,10 +27,10 @@
     )
     {
         [JsonConverter(typeof(JsonStringEnumConverter))]
-        public UsedStatus new_or_used { get; init; }
+        public UsedStatusNetwork new_or_used { get; init; }
         
         [JsonConverter(typeof(JsonStringEnumConverter))]
-        public Completeness completeness { get; init; }
+        public CompletenessNetwork completeness { get; init; }
 
         [JsonConverter(typeof(DecimalConverter))]
         public decimal unit_price { get; init; }
