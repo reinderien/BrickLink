@@ -70,7 +70,7 @@
         /// redirect to an error page with an error code.
         /// </exception>
         public static async System.Threading.Tasks.Task<TResponse> 
-            SendRequest<TResponse>(HttpRequestMessage request)
+            SendRequestAsync<TResponse>(HttpRequestMessage request)
             where TResponse: Models.Response.Response
         {
             TResponse? response;

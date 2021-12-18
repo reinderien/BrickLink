@@ -2,9 +2,10 @@
 {
     using System;
     using System.Linq;
-    
+    using System.Threading.Tasks;
+
     using Client.API;
-    using Client.Scrape;
+    using Client.Scrape.Pages;
     using ApiModels = Client.API.Models.Response;
     using ScrapeModels = Client.Scrape.Models;
     
@@ -15,11 +16,23 @@
             ConfiguredSession session = new();
 
             ApiModels.CategoryResponse categories = Endpoints.GetCategories(session).Result;
-            ApiModels.Category sw_cat = categories.data
+            ApiModels.Category category = categories.data
                 .First(cat => 
                     cat.category_name.ToLower() == "star wars");
 
-            foreach (ScrapeModels.Item item in Pages.Search(sw_cat.category_id).Result)
+            Search search = new()
+            {
+                Query = "Luke",
+                CategoryID = category.category_id,
+                Type = ItemType.Minifigure
+            };
+            
+            PrintSearch(search).Wait();
+        }
+
+        private static async Task PrintSearch(Search search)
+        {
+            await foreach (ScrapeModels.Item item in search.SearchDepaginateAsync())
                 Console.Out.WriteLine(item);
         }
     }

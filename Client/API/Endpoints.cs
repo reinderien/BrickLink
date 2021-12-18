@@ -42,26 +42,26 @@
                         .Select(status => '-' + status.ToString())
                     )
                 );
-                query.Add("status", statusFilter);
+                query.Set("status", statusFilter);
             }
 
-            return await Session.SendRequest<OrderSummaryResponse>(
+            return await Session.SendRequestAsync<OrderSummaryResponse>(
                 session.ConstructRequest(HttpMethod.Get, "orders", query));
         }
 
         public static async Task<OrderDetailResponse> GetOrder(
             Session session, int orderID
-        ) => await Session.SendRequest<OrderDetailResponse>(
+        ) => await Session.SendRequestAsync<OrderDetailResponse>(
             session.ConstructRequest(HttpMethod.Get, $"orders/{orderID}"));
 
         public static async Task<OrderItemsResponse> GetOrderItems(
             Session session, int orderID
-        ) => await Session.SendRequest<OrderItemsResponse>(
+        ) => await Session.SendRequestAsync<OrderItemsResponse>(
             session.ConstructRequest(HttpMethod.Get, $"orders/{orderID}/items"));
             
         public static async Task<CategoryResponse> GetCategories(
             Session session
-        ) => await Session.SendRequest<CategoryResponse>(
+        ) => await Session.SendRequestAsync<CategoryResponse>(
             session.ConstructRequest(HttpMethod.Get, "categories"));
 
         public static async Task<SubsetResponse> GetSubsets(
@@ -77,17 +77,17 @@
         {
             NameValueCollection query = new();
             if (colorID != null) 
-                query.Add("color_id", colorID.ToString());
+                query.Set("color_id", colorID.ToString());
             if (box != null) 
-                query.Add("box", box.Value.ToString().ToLower());
+                query.Set("box", box.Value.ToString().ToLower());
             if (instruction != null)
-                query.Add("instruction", instruction.Value.ToString().ToLower());
+                query.Set("instruction", instruction.Value.ToString().ToLower());
             if (breakMinifigs != null)
-                query.Add("break_minifigs", breakMinifigs.Value.ToString().ToLower());
+                query.Set("break_minifigs", breakMinifigs.Value.ToString().ToLower());
             if (breakSubsets != null)
-                query.Add("break_subsets", breakSubsets.Value.ToString().ToLower());
+                query.Set("break_subsets", breakSubsets.Value.ToString().ToLower());
 
-            return await Session.SendRequest<SubsetResponse>(
+            return await Session.SendRequestAsync<SubsetResponse>(
                 session.ConstructRequest(
                     HttpMethod.Get,
                     $"items/{itemType}/{itemNumber}/subsets"

@@ -2,7 +2,6 @@
 {
     using System;
     using System.Collections.Specialized;
-    using System.Linq;
     using System.Net.Http;
     using HtmlAgilityPack;
 
@@ -28,7 +27,7 @@
         }
 
         public static async System.Threading.Tasks.Task<HtmlDocument>
-            SendRequest(HttpRequestMessage request)
+            SendRequestAsync(HttpRequestMessage request)
         {
             HtmlDocument doc = new();
 

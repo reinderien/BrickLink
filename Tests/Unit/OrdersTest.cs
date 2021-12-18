@@ -36,6 +36,7 @@
         [Test]
         public void EnumPriority()
         {
+            Assert.Fail("This is actually not trustworthy; enum priority is undefined");
             Assert.AreEqual("OCR", OrderStatus.ORDER_CANCEL_REQUEST.ToString());
             Assert.AreEqual("OCR", OrderStatus.OCR.ToString());
             
