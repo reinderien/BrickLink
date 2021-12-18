@@ -6,14 +6,10 @@
     using System.Net.Http;
     using System.Threading.Tasks;
     
+    using Models;
+    using Models.Request;
     using Models.Response;
 
-    public enum OrderDirection
-    {
-        @in,
-        @out
-    }
-    
     public static class Endpoints
     {
         public static async Task<OrderSummaryResponse> GetOrders(

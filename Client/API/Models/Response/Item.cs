@@ -2,19 +2,6 @@
 {
     using System.Text.Json.Serialization;
 
-    public enum ItemType
-    {
-        MINIFIG,
-        PART,
-        SET,
-        BOOK,
-        GEAR,
-        CATALOG,
-        INSTRUCTION,
-        UNSORTED_LOT,
-        ORIGINAL_BOX
-    }
-
     public record Item(
         string no,
         int category_id

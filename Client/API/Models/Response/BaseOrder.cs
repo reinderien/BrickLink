@@ -17,6 +17,7 @@
         COMPLETED,
         CANCELLED,
         
+        // todo - precedences are non-deterministic
         // The actual API names. These names take precedence for ToString().
         OCR,
         NPB,

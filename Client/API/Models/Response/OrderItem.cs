@@ -5,6 +5,7 @@
 
     public enum UsedStatus
     {
+        // todo - precedences are non-deterministic
         // Actual API names
         N, U,
         // Friendly aliases
@@ -14,6 +15,7 @@
 
     public enum Completeness
     {
+        // todo - precedences are non-deterministic
         C, B, S,
         Complete = C,
         Incomplete = B,
