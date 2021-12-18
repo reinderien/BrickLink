@@ -20,8 +20,8 @@
         #endregion
     )
     {
-        // Shipping date.
-        // API-only field. It is not shown on the BrickLink pages. 
+        /// Shipping date.
+        /// API-only field. It is not shown on the BrickLink pages. 
         [JsonConverter(typeof(DateTimeConverter))]
         public DateTime date_shipped { get; init; }
     }

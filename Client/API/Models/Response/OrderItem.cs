@@ -34,32 +34,32 @@
         string description
     )
     {
-        // Indicates whether the item is new or used 
+        /// Indicates whether the item is new or used 
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public UsedStatusNetwork new_or_used { get; init; }
         
-        // Indicates whether the set is complete or incomplete
-        // (This value is valid only for SET type) 
+        /// Indicates whether the set is complete or incomplete
+        /// (This value is valid only for SET type) 
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public CompletenessNetwork completeness { get; init; }
 
-        // The original price of this item per sale unit 
+        /// The original price of this item per sale unit 
         [JsonConverter(typeof(DecimalConverter))]
         public decimal unit_price { get; init; }
 
-        // The unit price of this item after applying tiered pricing policy 
+        /// The unit price of this item after applying tiered pricing policy 
         [JsonConverter(typeof(DecimalConverter))]
         public decimal unit_price_final { get; init; }
 
-        // The original price of this item per sale unit in display currency of the user 
+        /// The original price of this item per sale unit in display currency of the user 
         [JsonConverter(typeof(DecimalConverter))]
         public decimal disp_unit_price { get; init; }
 
-        // The unit price of this item after applying tiered pricing policy in display currency of the user 
+        /// The unit price of this item after applying tiered pricing policy in display currency of the user 
         [JsonConverter(typeof(DecimalConverter))]
         public decimal disp_unit_price_final { get; init; }
         
-        // The weight of the item that overrides the catalog weight (upcoming feature)
+        /// The weight of the item that overrides the catalog weight (upcoming feature)
         [JsonConverter(typeof(DecimalConverter))]
         public decimal weight { get; init; }
         

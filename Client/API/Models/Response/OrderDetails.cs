@@ -24,9 +24,9 @@
         string? remarks
     ) : BaseOrder
     {
-        // The total weight of the items ordered.
-        // It applies the seller's custom weight when present to override the catalog weight.
-        // 0 if the order includes at least one item without any weight information or incomplete set 
+        /// The total weight of the items ordered.
+        /// It applies the seller's custom weight when present to override the catalog weight.
+        /// 0 if the order includes at least one item without any weight information or incomplete set 
         [JsonConverter(typeof(DecimalConverter))]
         public decimal total_weight { get; init; }
     }
