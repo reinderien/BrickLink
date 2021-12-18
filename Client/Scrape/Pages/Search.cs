@@ -11,51 +11,41 @@
 
     public enum ItemType
     {
-        Set,        
-        Part,       
-        Minifigure, 
-        Book,       
-        Gear,       
-        Catalog,    
-        Instruction,
-        OriginalBox,
+        Set, Part, Minifigure, Book, Gear, Catalog, Instruction, OriginalBox
     }
 
     public enum SortBy
     {
-        Name,     
-        Number,   
-        Date,     
-        Year,     
-        PartCount,
+        Name, Number, Date, Year, PartCount
     }
 
     public enum SortDirection
     {
-        Ascending,     
-        Descending,    
+        Ascending, Descending,    
     }
     
-    public record Search
+    public record Search(
+        // "Whole-word field" omitted - it redirects to a single item page, sometimes when it shouldn't
+        int? CategoryID = null,
+        int? ColourID = null,
+        int ItemsPerPage = 50,  // Possible max of 200
+        int MinifigMin = 0,
+        int? MinifigMax = null,
+        int PartMin = 0,
+        int? PartMax = null,
+        string? Query = null,
+        bool QueryName = true,
+        bool QueryNumber = false,
+        SortBy SortBy = SortBy.Name,
+        SortDirection SortDirection = SortDirection.Ascending,
+        ItemType? Type = null,
+        int? Year = null
+    )
     {
         private const bool EnableImages = true;
         
-        public int? CategoryID { get; init; }
-        public int? ColourID { get; init; }
-        public int ItemsPerPage { get; init; } = 50;
-        public int MinifigMin { get; init; } = 0;
-        public int? MinifigMax { get; init; }
-        public int PartMin { get; init; } = 0;
-        public int? PartMax { get; init; }
-        public string? Query { get; init; }
-        public bool QueryName { get; init; } = true;
-        public bool QueryNumber { get; init; } = false;
-        public SortBy SortBy { get; init; } = SortBy.Name;
-        public SortDirection SortDirection { get; init; } = SortDirection.Ascending;
-        public ItemType? Type { get; init; }
-        public int? Year { get; init; }
-
-        private ImmutableDictionary<ItemType, char> ItemTypeNames = new Dictionary<ItemType, char>()
+        private static readonly ImmutableDictionary<ItemType, char> ItemTypeNames =
+            new Dictionary<ItemType, char>()
         {
             { ItemType.Set        , 'S' },
             { ItemType.Part       , 'P' },
@@ -67,7 +57,8 @@
             { ItemType.OriginalBox, 'O' },
         }.ToImmutableDictionary();
 
-        private ImmutableDictionary<SortBy, char> SortByNames = new Dictionary<SortBy, char>()
+        private static readonly ImmutableDictionary<SortBy, char> SortByNames =
+            new Dictionary<SortBy, char>()
         {
             { SortBy.Name     , 'N' },
             { SortBy.Number   , 'I' },
@@ -76,15 +67,30 @@
             { SortBy.PartCount, 'P' },
         }.ToImmutableDictionary();
 
-        private ImmutableDictionary<SortDirection, char> SortDirectionNames = 
+        private static readonly ImmutableDictionary<SortDirection, char> SortDirectionNames = 
             new Dictionary<SortDirection, char>()
         {                                                                                     
             { SortDirection.Ascending , 'A' },                                                        
             { SortDirection.Descending, 'D' },                                                                                                                                                                                                                          
         }.ToImmutableDictionary();   
         
-        // "Whole-word field" omitted - it redirects to a single item page, sometimes when it shouldn't
 
+        public async IAsyncEnumerable<Item> SearchDepaginateAsync()
+        {
+            NameValueCollection query = MakeQuery();
+            
+            for (int page = 1;; page++)
+            {
+                query.Set("pg", page.ToString());
+                HtmlDocument doc = await Session.SendRequestAsync(MakeRequest(query));
+
+                foreach (Item item in LoadItems(doc))
+                    yield return item;
+
+                if (IsLastPage(doc)) break;
+            }
+        }
+        
         private NameValueCollection MakeQuery()
         {
             Dictionary<string, object?> pairs = new()
@@ -139,22 +145,6 @@
         {
             HtmlNode next = doc.DocumentNode.SelectSingleNode("//a[text() = 'Next']");
             return next is null;
-        }
-    
-        public async IAsyncEnumerable<Item> SearchDepaginateAsync()
-        {
-            NameValueCollection query = MakeQuery();
-            
-            for (int page = 1;; page++)
-            {
-                query.Set("pg", page.ToString());
-                HtmlDocument doc = await Session.SendRequestAsync(MakeRequest(query));
-
-                foreach (Item item in LoadItems(doc))
-                    yield return item;
-
-                if (IsLastPage(doc)) break;
-            }
         }
     }
 }
