@@ -77,11 +77,11 @@
 
         public async IAsyncEnumerable<Item> SearchDepaginateAsync()
         {
-            NameValueCollection query = MakeQuery();
+            NamedStrings query = RequestQuery;
             
             for (int page = 1;; page++)
             {
-                query.Set("pg", page.ToString());
+                query.Set("pg", page);
                 HtmlDocument doc = await Session.SendRequestAsync(MakeRequest(query));
 
                 foreach (Item item in LoadItems(doc))
@@ -90,38 +90,38 @@
                 if (IsLastPage(doc)) break;
             }
         }
-        
-        private NameValueCollection MakeQuery()
+
+        private class NamedStrings : NameValueCollection 
         {
-            Dictionary<string, object?> pairs = new()
+            public void Add(string key, object? value)
             {
-                {"sz", ItemsPerPage},
-                {"v", EnableImages ? 1 : 0},
-                {"catID", CategoryID},  // also maybe catString?
-                {"colorPart", ColourID},
-                {"figMin", MinifigMin},
-                {"figMax", MinifigMax},
-                {"partMin", PartMin},
-                {"partMax", PartMax},
-                {"q", Query},
-                {"searchName", QueryName ? 'Y' : 'N'},
-                {"searchNo", QueryNumber ? 'Y' : 'N'},
-                {"sortBy", SortByNames[SortBy]},
-                {"sortAsc", SortDirectionNames[SortDirection]},
-                {"catType", Type == null ? null : ItemTypeNames[Type.Value]},
-                {"itemYear", Year},
-            };
-            IEnumerable<KeyValuePair<string, string>> asStrings =
-                pairs.Where(pair => pair.Value != null)
-                    .Select(pair => 
-                        new KeyValuePair<string, string>(pair.Key, pair.Value!.ToString()!));
+                if (value != null) base.Add(key, value.ToString());
+            }
 
-            NameValueCollection query = new();
-            foreach (KeyValuePair<string, string> pair in asStrings)
-                query.Set(pair.Key, pair.Value);
-
-            return query;
+            public void Set(string key, object? value)
+            {
+                if (value != null) base.Set(key, value.ToString());
+            }
         }
+        
+        private NamedStrings RequestQuery => new()
+        {
+            {"sz", ItemsPerPage},
+            {"v", EnableImages ? 1 : 0},
+            {"catID", CategoryID},  // also maybe catString?
+            {"colorPart", ColourID},
+            {"figMin", MinifigMin},
+            {"figMax", MinifigMax},
+            {"partMin", PartMin},
+            {"partMax", PartMax},
+            {"q", Query},
+            {"searchName", QueryName ? 'Y' : 'N'},
+            {"searchNo", QueryNumber ? 'Y' : 'N'},
+            {"sortBy", SortByNames[SortBy]},
+            {"sortAsc", SortDirectionNames[SortDirection]},
+            {"catType", Type == null ? null : ItemTypeNames[Type.Value]},
+            {"itemYear", Year},
+        };
         
         private HttpRequestMessage MakeRequest(NameValueCollection query) =>
             Session.ConstructRequest(
