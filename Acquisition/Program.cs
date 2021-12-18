@@ -4,18 +4,35 @@
     using System.Linq;
     using System.Threading.Tasks;
 
+    using Analysis;
     using Client.API;
     using Client.Scrape.Pages;
     using ApiModels = Client.API.Models.Response;
     using ScrapeModels = Client.Scrape.Models;
-    
-    public static class Program
+  
+    public class Program
     {
+        private readonly ConfiguredSession _session = new();
+
         public static void Main()
         {
-            ConfiguredSession session = new();
+            new Program().PriceDemo();
+        }
 
-            ApiModels.CategoryResponse categories = Endpoints.GetCategories(session).Result;
+        public void PriceDemo()
+        {
+            int nnull = 0, total = 0;
+            foreach (var row in CatalogueItem.FromTsv())
+            {
+                if (row.Weight is null)
+                    nnull++;
+                total++;
+            }
+        }
+
+        public void ScrapeDemo()
+        {
+            ApiModels.CategoryResponse categories = Endpoints.GetCategories(_session).Result;
             ApiModels.Category category = categories.data
                 .First(cat => 
                     cat.category_name.ToLower() == "star wars");
