@@ -83,19 +83,43 @@
             return await Session.SendRequestAsync<SubsetResponse>(
                 session.ConstructRequest(
                     HttpMethod.Get,
-                    $"items/{itemType}/{itemNumber}/subsets"
+                    $"items/{itemType}/{itemNumber}/subsets",
+                    query
                 )
             );
         }
 
         public static async Task<PriceResponse> GetPrice(
+            Session session,
             ItemType itemType,
             string number,
             int? colorID = null,
-            GuideType guideType = GuideType.stock
+            GuideType guideType = GuideType.stock,
+            UsedStatus usedStatus = UsedStatus.New,
+            string? countryCode = null,
+            Region? region = null,
+            string? currencyCode = null,
+            TaxInclusion taxInclusion = TaxInclusion.ExcludeVAT
         )
         {
-            throw new NotImplementedException();
+            NullDroppingQuery query = new()
+            {
+                {"color_id", colorID},
+                {"guide_type", guideType},
+                {"new_or_used", (UsedStatusNetwork) usedStatus},
+                {"country_code", countryCode},
+                {"region", region},
+                {"currency_code", currencyCode},
+                {"vat", (TaxInclusionNetwork)taxInclusion},
+            };
+
+            return await Session.SendRequestAsync<PriceResponse>(
+                session.ConstructRequest(
+                    HttpMethod.Get,
+                    $"items/{itemType}/{number}/price",
+                    query
+                )
+            );
         }
     }
 }

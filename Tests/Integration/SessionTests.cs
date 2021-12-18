@@ -3,6 +3,7 @@ namespace BrickLink.Tests.Integration
     using NUnit.Framework;
     
     using Client.API;
+    using Client.API.Models;
     using Client.API.Models.Response;
     
     public class SessionTests
@@ -28,6 +29,16 @@ namespace BrickLink.Tests.Integration
         public void GetOrderItems()
         {
             OrderItemsResponse items = Endpoints.GetOrderItems(_session, orderID: 17318681).Result;
+        }
+
+        [Test]
+        public void GetPrice()
+        {
+            PriceResponse prices = Endpoints.GetPrice(
+                session: _session,
+                itemType: ItemType.MINIFIG,
+                number: "sh011",
+                currencyCode: "CAD").Result;
         }
     }
 }

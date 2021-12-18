@@ -1,6 +1,7 @@
 ﻿namespace BrickLink.Client.API.Models.Response
 {
     public record PriceResponse(
-        Meta meta
+        Meta meta,
+        PriceData data
         ) : Response(meta);
 }
