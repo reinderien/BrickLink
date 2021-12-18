@@ -12,6 +12,17 @@
 
     public static class Endpoints
     {
+        /// <summary>
+        /// This method retrieves a list of orders you received or placed.
+        /// </summary>
+        /// <param name="direction">The direction of the order to get</param>
+        /// <param name="filed">Indicates whether the result retries filed or un-filed orders</param>
+        /// <param name="includedStatuses">The status of the order to include</param>
+        /// <param name="excludedStatuses">The status of the order to exclude</param>
+        /// <returns>
+        /// If successful, this method returns a list of the the summary of an order resource as "data" in the response
+        /// body.
+        /// </returns>
         public static async Task<OrderSummaryResponse> GetOrders(
             Session session,
             OrderDirection direction = OrderDirection.@in,
@@ -45,16 +56,37 @@
                 session.ConstructRequest(HttpMethod.Get, "orders", query));
         }
 
+        /// <summary>
+        /// This method retrieves the details of a specific order.
+        /// </summary>
+        /// <param name="orderID">The ID of the order to get</param>
+        /// <returns>
+        /// If successful, this method returns an order resource as "data" in the response body.
+        /// </returns>
         public static async Task<OrderDetailResponse> GetOrder(
             Session session, int orderID
         ) => await Session.SendRequestAsync<OrderDetailResponse>(
             session.ConstructRequest(HttpMethod.Get, $"orders/{orderID}"));
 
+        /// <summary>
+        /// This method retrieves a list of items for the specified order.
+        /// </summary>
+        /// <param name="orderID">The ID of the order</param>
+        /// <returns>
+        /// If successful, this method returns a list of items batch list as "data" in the response body. An inner list
+        /// indicates items included in one batch of the order (order item batch).
+        /// </returns>
         public static async Task<OrderItemsResponse> GetOrderItems(
             Session session, int orderID
         ) => await Session.SendRequestAsync<OrderItemsResponse>(
             session.ConstructRequest(HttpMethod.Get, $"orders/{orderID}/items"));
             
+        /// <summary>
+        /// This method retrieves a list of the categories defined within BrickLink catalog.
+        /// </summary>
+        /// <returns>
+        /// If successful, this method returns a list of category resource as "data" in the response body.
+        /// </returns>
         public static async Task<CategoryResponse> GetCategories(
             Session session
         ) => await Session.SendRequestAsync<CategoryResponse>(
@@ -89,6 +121,34 @@
             );
         }
 
+        /// <summary>
+        /// This method returns the price statistics of the specified item in BrickLink catalog.
+        /// </summary>
+        /// <param name="itemType">The type of the item</param>
+        /// <param name="number">Identification number of the item </param>
+        /// <param name="colorID">The color of the item</param>
+        /// <param name="guideType">Indicates which statistics to be provided</param>
+        /// <param name="usedStatus">Indicates the condition of items that are included in the statistics</param>
+        /// <param name="countryCode">
+        /// The result includes only items in stores which are located in specified country.
+        /// If you don't specify both country_code and region, this method retrieves the price information regardless of
+        /// the store's location
+        /// </param>
+        /// <param name="region">
+        /// The result includes only items in stores which are located in specified region.
+        /// If you don't specify both country_code and region, this method retrieves the price information regardless of
+        /// the store's location 
+        /// </param>
+        /// <param name="currencyCode">
+        /// This method returns price in the specified currency code
+        /// If you don't specify this value, price is retrieved in the base currency of the user profile's 
+        /// </param>
+        /// <param name="taxInclusion">
+        /// Indicates that price will include VAT for the items of VAT enabled stores.
+        /// </param>
+        /// <returns>
+        /// If successful, this method returns a price guide resource as "data" in the response body.
+        /// </returns>
         public static async Task<PriceResponse> GetPrice(
             Session session,
             ItemType itemType,

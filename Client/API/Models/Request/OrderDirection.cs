@@ -2,7 +2,7 @@
 {
     public enum OrderDirection
     {
-        @in,
-        @out
+        @in,  // Gets placed orders
+        @out  // Gets received orders
     }
 }

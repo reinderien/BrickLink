@@ -32,6 +32,12 @@ namespace BrickLink.Tests.Integration
         }
 
         [Test]
+        public void GetCategories()
+        {
+            CategoryResponse categories = Endpoints.GetCategories(_session).Result;
+        }
+
+        [Test]
         public void GetPrice()
         {
             PriceResponse prices = Endpoints.GetPrice(
