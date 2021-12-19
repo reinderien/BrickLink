@@ -4,6 +4,6 @@
     
     public record OrderItemsResponse(
         Meta meta,
-        IReadOnlyCollection<IReadOnlyCollection<OrderItem>> data
+        IReadOnlyList<IReadOnlyList<OrderItem>> data
     ) : Response(meta);
 }

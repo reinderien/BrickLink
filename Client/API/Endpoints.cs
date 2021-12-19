@@ -198,5 +198,34 @@
                 )
             );
         }
+
+        /// <summary>
+        /// This method returns Part-Color-Code (A.K.A ElementID) of the
+        /// specified item. Only items of type PART are supported.
+        /// </summary>
+        /// <param name="number">Identification number of an item to get</param>
+        /// <param name="colorID">Color ID of an item. If not specified, API retrieves element IDs of an item in any colors</param>
+        /// <returns>
+        /// If successful, this method returns a item mapping resource as "data" in the response body.
+        /// </returns>
+        public static async Task<ItemMapResponse> GetElementID(
+            Session session,
+            string number,
+            int? colorID = null
+        )
+        {
+            NullDroppingQuery query = new()
+            {
+                {"color_id", colorID},
+            };
+
+            return await Session.SendRequestAsync<ItemMapResponse>(
+                session.ConstructRequest(
+                    HttpMethod.Get,
+                    $"item_mapping/PART/{number}",
+                    query
+                )
+            );
+        }
     }
 }

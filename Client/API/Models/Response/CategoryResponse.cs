@@ -4,6 +4,6 @@
 
     public record CategoryResponse(
         Meta meta,
-        IReadOnlyCollection<Category> data
+        IReadOnlyList<Category> data
     ) : Response(meta);
 }

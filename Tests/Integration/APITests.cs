@@ -46,5 +46,13 @@ namespace BrickLink.Tests.Integration
                 number: "sh011",
                 currencyCode: "CAD").Result;
         }
+
+        [Test]
+        public void GetElementID()
+        {
+            ItemMapResponse items = Endpoints.GetElementID(
+                session: _session,
+                number: "3626cpb1516").Result;
+        }
     }
 }

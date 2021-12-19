@@ -1,9 +1,8 @@
 ﻿namespace BrickLink.Client.API.Models.Response
 {
     using System.Collections.Generic;
-
-    public record OrderSummaryResponse(
+    public record ItemMapResponse(
         Meta meta,
-        IReadOnlyList<OrderSummary> data
+        IReadOnlyList<ItemMap> data
     ) : Response(meta);
 }

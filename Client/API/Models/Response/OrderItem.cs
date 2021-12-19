@@ -17,7 +17,7 @@
         // The ID of the inventory that includes the item 
         long inventory_id,
         // An object representation of the item 
-        Item item,
+        ItemWithCategory item,
         // The ID of the color of the item 
         int color_id,
         // Color name of the item (upcoming feature)

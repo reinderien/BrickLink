@@ -4,16 +4,6 @@
     using System.Collections.Generic;
     using System.Text.Json.Serialization;
 
-    public record PriceItem(
-        // Item's identification number in BL catalog
-        string no
-    )
-    {
-        /// The type of the item
-        [JsonConverter(typeof(JsonStringEnumConverter))]
-        public ItemType type { get; init; }
-    }
-
     public record PriceDetail(
         // The number of the items in the inventory 
         int quantity,
@@ -32,7 +22,7 @@
 
     public record PriceData(
         // An object representation of the item 
-        PriceItem item,
+        Item item,
         // The currency code of the price 
         string currency_code,
         // The number of times the item has been sold for last 6 months
