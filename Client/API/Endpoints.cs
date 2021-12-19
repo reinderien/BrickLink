@@ -1,5 +1,6 @@
 ﻿namespace BrickLink.Client.API
 {
+    using System;
     using System.Collections.Generic;
     using System.Collections.Specialized;
     using System.Linq;
@@ -92,6 +93,20 @@
         ) => await Session.SendRequestAsync<CategoryResponse>(
             session.ConstructRequest(HttpMethod.Get, "categories"));
 
+        /// <summary>
+        /// This method returns a list of items that are included in the specified item.
+        /// </summary>
+        /// <param name="itemType">The type of the item.</param>
+        /// <param name="itemNumber">Identification number of the item</param>
+        /// <param name="colorID">The color of the item (this value is valid only for PART type)</param>
+        /// <param name="box">Indicates whether the set includes the original box </param>
+        /// <param name="instruction">Indicates whether the set includes the original instruction</param>
+        /// <param name="breakMinifigs">Indicates whether the result breaks down minifigs as parts</param>
+        /// <param name="breakSubsets">Indicates whether the result breaks down sets in set</param>
+        /// <returns>
+        /// If successful, this method returns a nested list of subset entries as "data" in the response body. Note that
+        /// the result is grouped by matching. An inner list indicates one matching group of items.
+        /// </returns>
         public static async Task<SubsetResponse> GetSubsets(
             Session session,
             ItemType itemType,
@@ -103,6 +118,8 @@
             bool? breakSubsets = null
         )
         {
+            throw new NotImplementedException();
+            
             NullDroppingQuery query = new()
             {
                 {"color_id", colorID},
@@ -140,7 +157,7 @@
         /// the store's location 
         /// </param>
         /// <param name="currencyCode">
-        /// This method returns price in the specified currency code
+        /// This method returns price in the specified currency code.
         /// If you don't specify this value, price is retrieved in the base currency of the user profile's 
         /// </param>
         /// <param name="taxInclusion">

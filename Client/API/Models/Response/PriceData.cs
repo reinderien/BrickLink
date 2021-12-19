@@ -17,7 +17,7 @@
     public record PriceDetail(
         // The number of the items in the inventory 
         int quantity,
-        // Indicates whether or not the seller ships to your country(based on the user profile) 
+        // Indicates whether or not the seller ships to your country (based on the user profile) 
         bool shipping_available
     )
     {
