@@ -9,16 +9,6 @@
     
     using Models;
 
-    public enum ItemType
-    {
-        Set, Part, Minifigure, Book, Gear, Catalog, Instruction, OriginalBox
-    }
-
-    internal enum ItemTypeNetwork
-    { 
-        S,  P,  M,  B,  G,  C,  I,  O, 
-    }
-
     public enum SortBy
     {
         Name, Number, Date, Year, PartCount

@@ -5,7 +5,18 @@
     using System.Collections.Immutable;
     using System.Linq;
     using System.Web;
+    
     using HtmlAgilityPack;
+    
+    public enum ItemType
+    {
+        Set, Part, Minifigure, Book, Gear, Catalog, Instruction, OriginalBox
+    }
+
+    internal enum ItemTypeNetwork
+    { 
+        S,  P,  M,  B,  G,  C,  I,  O, 
+    }
 
     public record Category(
         string Id,
@@ -34,7 +45,7 @@
         Uri ItemLink,
         Uri Image,
         Uri TypeLink,
-        char TypeCode,
+        ItemType TypeCode,
         string TypeName,
         IReadOnlyList<Category> Categories
     )
@@ -54,7 +65,7 @@
             ParseDesc(
                 descCell: cells[headings["Description"]], root: root,
                 out string name, out Uri typeLink, out string typeName,
-                out char typeCode, out IReadOnlyList<Category> categories);
+                out ItemType typeCode, out IReadOnlyList<Category> categories);
                 
             return new(
                 name, number, inventoryLink, itemLink, 
@@ -105,7 +116,7 @@
             out string name,
             out Uri typeLink,
             out string typeName,
-            out char typeCode,
+            out ItemType typeCode,
             out IReadOnlyList<Category> categories)
         {
             name = HttpUtility.HtmlDecode(
@@ -125,7 +136,7 @@
             string? typeCodeStr = HttpUtility.ParseQueryString(typeLink.Query)["itemType"];
             if (typeCodeStr is not {Length: 1})
                 throw new ClientException($"Unexpected type code '{typeCodeStr}'");
-            typeCode = typeCodeStr[0];
+            typeCode = (ItemType)Enum.Parse<ItemTypeNetwork>(typeCodeStr);
 
             categories = descCell.SelectNodes(
                     ".//a[starts-with(@href, '/catalogList.asp')]"

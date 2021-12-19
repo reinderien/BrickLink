@@ -6,7 +6,7 @@ namespace BrickLink.Tests.Integration
     using Client.API.Models;
     using Client.API.Models.Response;
     
-    public class SessionTests
+    public class APITests
     {
         private readonly ConfiguredSession _session = new();
 

@@ -41,7 +41,7 @@
             {
                 Query = "Luke",
                 CategoryID = category.category_id,
-                Type = ItemType.Minifigure
+                Type = ScrapeModels.ItemType.Minifigure
             };
             
             PrintSearch(search).Wait();
