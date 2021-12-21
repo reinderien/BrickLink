@@ -14,6 +14,27 @@
 
     public static class PriceGuide
     {
+        private static readonly Regex itemParamsPat = new(
+            pattern: @"
+                ^\s*,?\s*             (?# start, optional comma)
+                (?<key>[^:]+?):\s*    (?# key, colon)
+                '?(?<value>[^']*?)'?  (?# optional quote, value, optional quote)
+                \s*$                  (?# end)",
+            options: RegexOptions.Compiled 
+                   | RegexOptions.Multiline 
+                   | RegexOptions.IgnorePatternWhitespace
+        );
+
+        private static readonly Regex pricePat = new(
+            pattern: @"
+                ^\s*~?               (?# Start, optional approx-tilde)
+                (?<currency>.+?)     (?# Currency, like CA $)
+                (?<amount>\d*\.\d*)  (?# Decimal amount)
+                \s*$                 (?# end)",
+            options: RegexOptions.Compiled 
+                   | RegexOptions.IgnorePatternWhitespace
+        );
+        
         private static HttpRequestMessage MakeOuterRequest(
             ItemType type, string number
         )
@@ -30,17 +51,6 @@
                 }
             );
         }
-
-        private static readonly Regex itemParamsPat = new(
-            pattern: @"
-                ^\s*,?\s*             (?# start, optional comma)
-                (?<key>[^:]+?):\s*    (?# key, colon)
-                '?(?<value>[^']*?)'?  (?# optional quote, value, optional quote)
-                \s*$                  (?# end)",
-            options: RegexOptions.Compiled 
-                   | RegexOptions.Multiline 
-                   | RegexOptions.IgnorePatternWhitespace
-        );
 
         private static ImmutableDictionary<string, string> ParseJSParameters(HtmlDocument outerDoc)
         {
@@ -137,17 +147,76 @@
                     {"prec", "4"},
                 }
             );
-
         }
 
+        private class DateGrouper
+        {
+            private DateOnly? _date;
+            private const string DateFormat = "MMMM yyyy";
+            
+            public DateOnly? GetKey(HtmlNode node)
+            {
+                HtmlNode text = node.SelectSingleNode("./td[@class='pcipgSubHeader']");
+
+                if (text != null)
+                {
+                    _date = DateOnly.ParseExact(
+                        s: text.InnerText,
+                        format: DateFormat);
+                }
+    
+                return _date;
+            }
+        }
+
+        private static IEnumerable<OrderLot> GroupToLots(
+            IGrouping<DateOnly?, HtmlNode> group, bool used
+        )
+        {
+            if (group.Key is null) yield break;
+
+            Queue<HtmlNode> rows = new(group);
+            HtmlNode dateRow = rows.Dequeue(),
+                heads = rows.Dequeue();
+            
+            ImmutableDictionary<string, int> headIndices = heads
+                .SelectNodes("./td")
+                .Select((cell, index) => new KeyValuePair<string, int>(cell.InnerText, index))
+                .ToImmutableDictionary();
+
+            foreach (HtmlNode row in rows)
+            {
+                HtmlNodeCollection cells = row.SelectNodes("./td");
+                if (cells.Count < headIndices.Count)
+                    break;
+
+                string each = cells[headIndices["Each"]].InnerText,
+                    quantity = cells[headIndices["Qty"]].InnerText;
+                Match eachFields = pricePat.Match(each);
+                yield return new OrderLot(
+                    month: group.Key.Value,
+                    used: used,
+                    quantity: int.Parse(quantity),
+                    currency: eachFields.Groups["currency"].Value,
+                    unitPrice: decimal.Parse(eachFields.Groups["amount"].Value)
+                );
+            }
+        }
+
+        private static IEnumerable<OrderLot> LoadColumn(
+            HtmlNode root,
+            bool used,
+            string colClass
+        ) => root
+            .SelectNodes($"//td[@class='pcipg{colClass}Column'][1]/table/tr")
+            .GroupBy(new DateGrouper().GetKey)
+            .SelectMany(group => GroupToLots(group, used));
+        
         private static IEnumerable<OrderLot> LoadDoc(HtmlDocument innerDoc)
         {
-            HtmlNode
-                newSales = innerDoc.DocumentNode.SelectSingleNode("//td[@class='pcipgOddColumn']"),
-                usedSales = innerDoc.DocumentNode.SelectSingleNode("//td[@class='pcipgEvenColumn']");
-
-            throw new NotImplementedException();
-            return null;
+            HtmlNode root = innerDoc.DocumentNode;
+            return LoadColumn(root, used: false, colClass: "Odd")
+                .Concat(LoadColumn(root, used: true, colClass: "Even"));
         }
 
         public static async Task<IEnumerable<OrderLot>> LoadAsync(
