@@ -140,14 +140,35 @@
 
         }
 
-        private static IEnumerable<OrderLot> LoadDoc(HtmlDocument innerDoc)
+        private static IEnumerable<OrderLot> LoadColumn(
+            HtmlNode root,
+            bool used,
+            string colClass
+        )
         {
-            HtmlNode
-                newSales = innerDoc.DocumentNode.SelectSingleNode("//td[@class='pcipgOddColumn']"),
-                usedSales = innerDoc.DocumentNode.SelectSingleNode("//td[@class='pcipgEvenColumn']");
+            HtmlNode table = root.SelectSingleNode(
+                $"//td[@class='pcipg{colClass}Column']/table");
+
+            HtmlNodeCollection heads = table.SelectNodes(
+                "./tr[td[@class='pcipgSubHeader']]"
+            );
+
+            List<string> rows =
+                heads[1].SelectNodes(
+                    "./following-sibling::tr"
+                )
+                .Select(node => node.OuterHtml)
+                .ToList();
 
             throw new NotImplementedException();
             return null;
+        }
+
+        private static IEnumerable<OrderLot> LoadDoc(HtmlDocument innerDoc)
+        {
+            HtmlNode root = innerDoc.DocumentNode;
+            return LoadColumn(root, used: false, colClass: "Odd")
+                .Concat(LoadColumn(root, used: true, colClass: "Even"));
         }
 
         public static async Task<IEnumerable<OrderLot>> LoadAsync(

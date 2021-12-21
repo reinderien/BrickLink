@@ -1,4 +1,8 @@
-﻿namespace BrickLink.Acquisition
+﻿using System.Collections.Generic;
+using System.IO;
+using HtmlAgilityPack;
+
+namespace BrickLink.Acquisition
 {
     using System;
     using System.Linq;
@@ -14,9 +18,63 @@
     {
         private readonly ConfiguredSession _session = new();
 
+        private class DateGrouper
+        {
+            private DateOnly? date;
+            private const string DateFormat = "MMMM yyyy";
+            
+            public DateOnly? GetKey(HtmlNode node)
+            {
+                HtmlNode text = node.SelectSingleNode("./td[@class='pcipgSubHeader']");
+
+                if (text != null)
+                {
+                    date = DateOnly.ParseExact(
+                        s: text.InnerText,
+                        format: DateFormat);
+                }
+    
+                return date;
+            }
+        }
+
+        private static IEnumerable<ScrapeModels.OrderLot> GroupToLots(
+            IGrouping<DateOnly?, HtmlNode> group
+        )
+        {
+            if (group.Key is null) yield break;
+            
+            foreach (HtmlNode node in @group)
+            {
+                yield return null;
+            }
+        }
+
         public static void Main()
         {
-            new Program().PriceDemo();
+
+
+
+            HtmlDocument doc = new HtmlDocument();
+            using (StreamReader reader = new StreamReader(
+                @"C:\Users\gtoom\AppData\Roaming\JetBrains\Rider2021.2\scratches\price-guide-child.html"))
+                doc.Load(reader);
+
+
+            var grouper = new DateGrouper();
+
+
+            var grouped = doc.DocumentNode
+                .SelectNodes("//td[@class='pcipgOddColumn'][1]/table/tr")
+                .GroupBy(grouper.GetKey)
+                .SelectMany(GroupToLots)
+                .ToList();
+            //.Select(node => node.OuterHtml);
+
+
+
+
+            // new Program().PriceDemo();
         }
 
         public void PriceDemo()
