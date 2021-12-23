@@ -1,4 +1,6 @@
-﻿namespace BrickLink.Tests.Integration
+﻿using System.Linq;
+
+namespace BrickLink.Tests.Integration
 {
     using System.Collections.Generic;
     using System.Threading.Tasks;
@@ -34,10 +36,13 @@
         [Test]
         public void TestPriceGuide()
         {
-            IEnumerable<OrderLot> lots = PriceGuide.LoadAsync(
+            PriceGuideDocument doc = PriceGuide.LoadAsync(
                 type: ItemType.Minifigure,
                 number: "sw0003"
             ).Result;
+
+            IReadOnlyList<SoldOrderLot> sold = doc.SoldLots.ToList();
+            IReadOnlyList<ForSaleOrderLot> forSale = doc.ForSaleLots.ToList();
         }
     }
 }

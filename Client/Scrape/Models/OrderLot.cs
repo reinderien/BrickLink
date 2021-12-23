@@ -1,16 +1,22 @@
-﻿namespace BrickLink.Client.Scrape.Models
-{
-    using System;
+﻿namespace BrickLink.Client.Scrape.Models;
 
-    public record OrderLot(
-        DateOnly month,
-        bool used,
-        int quantity,
-        string currency,
-        decimal unitPrice
-    )
-    {
-        
-        
-    }
-}
+using System;
+
+public record OrderLot(
+    bool Used,
+    int Quantity,
+    string Currency,
+    decimal UnitPrice
+);
+
+public record SoldOrderLot(
+    OrderLot Lot,
+    DateOnly Month
+);
+
+public record ForSaleOrderLot(
+    OrderLot Lot,
+    bool ShipsToYou,
+    Uri StoreItemLink,
+    string StoreName
+);
